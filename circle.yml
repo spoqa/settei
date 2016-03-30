@@ -1,0 +1,9 @@
+machine:
+  python:
+    version: 3.5.1
+test:
+  override:
+    - tox
+  post:
+    - mkdir -p $CIRCLE_TEST_REPORTS/pytest/
+    - cp junit-*.xml $CIRCLE_TEST_REPORTS/pytest/
