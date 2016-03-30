@@ -28,7 +28,7 @@ class TestConfig(dict):
 class TestAppConfig(Configuration):
     database_url = config_property(
         'database.url', str,
-        default='sqlite:///store-service.db', default_warning=True
+        default='sqlite:///test_app.db', default_warning=True
     )
 
 
@@ -102,18 +102,18 @@ def test_app_from_file(tmpdir):
     path = tmpdir.join('cfg.toml')
     path.write('''
     [database]
-    url = "sqlite:///test.db"
+    url = "sqlite:///a.db"
     ''')
     with path.open() as f:
         cfg = TestAppConfig.from_file(f)
-    assert cfg.database_url == 'sqlite:///test.db'
+    assert cfg.database_url == 'sqlite:///a.db'
 
 
 def test_app_from_path(tmpdir):
     path = tmpdir.join('cfg.toml')
     path.write('''
     [database]
-    url = "sqlite:///test.db"
+    url = "sqlite:///b.db"
     ''')
     cfg = TestAppConfig.from_path(pathlib.Path(path.strpath))
-    assert cfg.database_url == 'sqlite:///test.db'
+    assert cfg.database_url == 'sqlite:///b.db'
