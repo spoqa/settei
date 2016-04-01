@@ -11,14 +11,13 @@ install_requires = [
 ]
 
 setup(
-    name='spoqa_config',
+    name='settei',
     version='0.1.0',
-    description='Library for configuration to load it from a TOML file '
-                'and access its values',
+    description='Configuration loader from a TOML file',
     license='Apache 2.0',
     author='Spoqa Creators',
     author_email='dev' '@' 'spoqa.com',
-    py_modules=['spoqa_config'],
+    py_modules=['settei'],
     install_requires=install_requires,
     extras_require={
         'tests': tests_require,
