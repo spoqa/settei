@@ -3,7 +3,7 @@ import warnings
 
 from pytest import raises
 
-from spoqa.config import config_property, Configuration, ConfigWarning
+from spoqa_config import config_property, Configuration, ConfigWarning
 
 
 class TestConfig(dict):

@@ -1,5 +1,5 @@
 """
-spoqa.config
+spoqa_config
 ~~~~~~~~~~~~
 
 :copyright: (c) 2016 Spoqa, Inc.

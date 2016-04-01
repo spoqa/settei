@@ -11,15 +11,14 @@ install_requires = [
 ]
 
 setup(
-    name='spoqa.config',
+    name='spoqa_config',
     version='0.1.0',
     description='Library for configuration to load it from a TOML file '
                 'and access its values',
     license='Apache 2.0',
     author='Spoqa Creators',
     author_email='dev' '@' 'spoqa.com',
-    namespace_packages=['spoqa'],
-    packages=['spoqa'],
+    py_modules=['spoqa_config'],
     install_requires=install_requires,
     extras_require={
         'tests': tests_require,
