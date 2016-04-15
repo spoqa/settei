@@ -9,6 +9,7 @@ settei
 import collections.abc
 import pathlib
 import textwrap
+import typing  # noqa
 import warnings
 
 from annotation.typed import typechecked
@@ -97,10 +98,17 @@ class config_property:
                         )
                     return default
                 raise
-        if not isinstance(value, self.cls):
+        if isinstance(self.cls, typing.UnionMeta):
+            cls = self.cls.__union_params__
+            clsrepr = repr(cls)
+        else:
+            cls = self.cls
+            clsrepr = '{0.__module__}.{0.__qualname__}'.format(cls)
+        if not isinstance(value, cls):
             raise TypeError(
-                '{0} configuration must be {1.__module__}.{1.__qualname__}, '
-                'not {2!r}'.format(self.key, self.cls, value)
+                '{0} configuration must be {1}, not {2!r}'.format(
+                    self.key, clsrepr, value
+                )
             )
         return value
 
