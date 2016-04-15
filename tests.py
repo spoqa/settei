@@ -1,7 +1,8 @@
 import pathlib
+import typing  # noqa
 import warnings
 
-from pytest import raises
+from pytest import mark, raises
 
 from settei import config_property, Configuration, ConfigWarning
 
@@ -23,6 +24,7 @@ class TestConfig(dict):
     depth2_optional = config_property('section.key', str, default=None)
     depth2_warn = config_property('section.key', str,
                                   default=None, default_warning=True)
+    union = config_property('union', typing.Union[int, str])
 
 
 class TestAppConfig(Configuration):
@@ -32,8 +34,9 @@ class TestAppConfig(Configuration):
     )
 
 
-def test_config_property():
-    c = TestConfig(key=123, section={'key': 'val'})
+@mark.parametrize('union_value', [123, 'string'])
+def test_config_property(union_value: typing.Union[int, str]):
+    c = TestConfig(key=123, section={'key': 'val'}, union=union_value)
     assert c.depth1_required == 123
     with warnings.catch_warnings(record=True) as w:
         assert c.depth1_optional == 123
@@ -54,6 +57,7 @@ def test_config_property():
     with warnings.catch_warnings(record=True) as w:
         assert c.depth2_warn == 'val'
         assert len(w) == 0
+    assert c.union == union_value
 
 
 def test_config_property_absence():
@@ -83,6 +87,8 @@ def test_config_property_absence():
         assert c.depth2_warn is None
         assert len(w) == 1
         assert issubclass(w[-1].category, ConfigWarning)
+    with raises(KeyError):
+        c.union
 
 
 def test_config_property_absence_2nd_depth():
