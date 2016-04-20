@@ -12,8 +12,8 @@ import textwrap
 import typing  # noqa
 import warnings
 
-from annotation.typed import typechecked
 from pytoml import load
+from tsukkomi.typed import typechecked
 
 
 __all__ = 'Configuration', 'ConfigWarning', 'config_property'

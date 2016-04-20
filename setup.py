@@ -7,7 +7,10 @@ tests_require = [
 install_requires = [
     'pytoml >= 0.1.7, < 0.2.0',
     'setuptools',
-    'typeannotations >= 0.1.0, < 0.2.0',
+    'tsukkomi >= 0.0.1',
+]
+docs_require = [
+    'Sphinx >= 1.4',
 ]
 
 setup(
@@ -21,10 +24,16 @@ setup(
     install_requires=install_requires,
     extras_require={
         'tests': tests_require,
+        'docs': docs_require,
     },
     tests_require=tests_require,
     classifiers=[
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3 :: Only',
+        'Intended Audience :: Developers',
+        'Topic :: Software Development',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Utilities',
     ]
 )

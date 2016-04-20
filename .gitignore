@@ -4,3 +4,4 @@ build/
 *.egg-info/
 .tox/
 junit-*.xml
+docs/_build
