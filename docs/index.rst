@@ -3,37 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to settei's documentation!
-==================================
+.. include:: ../README.rst
 
-Configuration utility for common Python applications and services.
-
-
-Load configuration from ``dev.toml``.
-
-.. code-block:: python
-
-   import pathlib
-
-   from settei import Configuration, config_property
-
-   class WebConfiguration(Configuration):
-       """Load Configuration::
-
-          [web]
-          debug = true
-
-       """
-
-       #: debug option
-       debug = config_property('web.debug', bool, default=False)
-
-
-   conf = WebConfiguration.from_path(pathlib.Path('.') / 'dev.toml')
-   print(conf.debug)
-
-
-Contents:
+Modules:
 
 .. toctree::
    :maxdepth: 2
