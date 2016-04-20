@@ -10,7 +10,7 @@ install_requires = [
     'tsukkomi >= 0.0.1',
 ]
 docs_require = [
-    'Sphinx >= 1.2',
+    'Sphinx >= 1.4',
 ]
 
 setup(
@@ -29,7 +29,6 @@ setup(
     tests_require=tests_require,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
-        'Environment :: Console',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3 :: Only',
         'Intended Audience :: Developers',
