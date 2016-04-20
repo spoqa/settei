@@ -9,6 +9,9 @@ install_requires = [
     'setuptools',
     'tsukkomi >= 0.0.1',
 ]
+docs_require = [
+    'Sphinx >= 1.2',
+]
 
 setup(
     name='settei',
@@ -21,6 +24,7 @@ setup(
     install_requires=install_requires,
     extras_require={
         'tests': tests_require,
+        'docs': docs_require,
     },
     tests_require=tests_require,
     classifiers=[
