@@ -12,7 +12,7 @@ import textwrap
 import typing  # noqa
 import warnings
 
-from annotation.typed import typechecked
+from tsukkomi.typed import typechecked
 from pytoml import load
 
 

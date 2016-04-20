@@ -7,7 +7,7 @@ tests_require = [
 install_requires = [
     'pytoml >= 0.1.7, < 0.2.0',
     'setuptools',
-    'typeannotations >= 0.1.0, < 0.2.0',
+    'tsukkomi >= 0.0.1',
 ]
 
 setup(
