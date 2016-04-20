@@ -28,7 +28,13 @@ setup(
     },
     tests_require=tests_require,
     classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3 :: Only',
+        'Intended Audience :: Developers',
+        'Topic :: Software Development',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Utilities',
     ]
 )
