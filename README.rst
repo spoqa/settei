@@ -1,4 +1,4 @@
-設定 (settei)
+設定 (Settei)
 =============
 
 .. image:: https://readthedocs.org/projects/settei/badge/?version=latest
@@ -13,13 +13,13 @@
 
 
 Configuration utility for common Python applications and services.
-FYI, settei means setting in japanese :)
+FYI, Settei means settings in Japanese. :)
 
 
 Loading a configuration is easy
 -------------------------------
 
-Suppose you use `flask`_ with settei.
+Suppose you use `Flask`_ with Settei.
 
 .. code-block:: python
 
@@ -46,4 +46,4 @@ Suppose you use `flask`_ with settei.
        app.run(debug=conf.debug)
 
 
-.. _flask: http://flask.pocoo.org/
+.. _Flask: http://flask.pocoo.org/
