@@ -13,17 +13,18 @@ extras_require = {
     'flask': ['Flask', 'Werkzeug'],
     'celery': ['celery', 'kombu'],
 }
-tests_require = [
-    'pytest >= 2.7.0',
-]
-tests_require.extend(
+all_extra_requires = [
     package
     for packages in extras_require.values()
     for package in packages
-)
+]
+tests_require = [
+    'pytest >= 2.7.0',
+] + all_extra_requires
 docs_require = [
     'Sphinx >= 1.4',
-]
+    'sphinx_rtd_theme',
+] + all_extra_requires
 
 
 def get_version():

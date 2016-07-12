@@ -1,3 +1,3 @@
 
-.. automodule:: settei.base
+.. automodule:: settei.version
    :members:
