@@ -1,4 +1,5 @@
 import ast
+import os
 import os.path
 
 from setuptools import find_packages, setup
@@ -25,6 +26,9 @@ docs_require = [
     'Sphinx >= 1.4',
     'sphinx_rtd_theme',
 ] + all_extra_requires
+
+if os.environ.get('READTHEDOCS'):
+    install_requires.extend(docs_require)
 
 
 def get_version():
