@@ -5,7 +5,7 @@
 import collections.abc
 import pathlib
 import textwrap
-import typing  # noqa
+import typing
 import warnings
 
 from pytoml import load
@@ -46,7 +46,8 @@ class config_property:
     """
 
     @typechecked
-    def __init__(self, key: str, cls: type, docstring: str=None, **kwargs):
+    def __init__(self, key: str, cls: type, docstring: str=None,
+                 **kwargs) -> None:
         self.key = key
         self.cls = cls
         self.__doc__ = docstring
@@ -73,7 +74,7 @@ class config_property:
             self.default_func = None
             self.default_warning = False
 
-    def __get__(self, obj, cls=None):
+    def __get__(self, obj, cls: typing.Optional[type]=None):
         if obj is None:
             return self
         value = obj
@@ -108,11 +109,11 @@ class config_property:
         return value
 
     @property
-    def docstring(self):
+    def docstring(self) -> str:
         """(:class:`str`) The propertly indented :attr:`__doc__` string."""
         return textwrap.dedent(self.__doc__).rstrip()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '{0.__module__}.{0.__qualname__}({1!r})'.format(
             type(self), self.key
         )
@@ -132,7 +133,7 @@ class Configuration(collections.abc.Mapping):
 
     """
     @classmethod
-    def from_file(cls, file):
+    def from_file(cls, file) -> 'Configuration':
         """Load settings from the given ``file`` and instantiate an
         :class:`Configuration` instance from that.
 
@@ -145,7 +146,7 @@ class Configuration(collections.abc.Mapping):
 
     @classmethod
     @typechecked
-    def from_path(cls, path: pathlib.Path):
+    def from_path(cls, path: pathlib.Path) -> 'Configuration':
         """Load settings from the given ``path`` and instantiate an
         :class:`Configuration` instance from that.
 
@@ -161,16 +162,21 @@ class Configuration(collections.abc.Mapping):
             return cls.from_file(f)
 
     @typechecked
-    def __init__(self, config: collections.abc.Mapping={}, **kwargs):
+    def __init__(self, config: typing.Mapping[str, object]={}, **kwargs):
         self.config = dict(config, **kwargs)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.config)
 
-    def __iter__(self) -> collections.abc.Iterator:
+    def __iter__(self) -> typing.Iterator[str]:
         return iter(self.config)
 
     def __getitem__(self, key: str):
         if isinstance(key, str):
             return self.config[key]
         raise KeyError(key)
+
+    def __repr__(self) -> str:
+        return '{0.__module__}.{0.__qualname__}({1!r})'.format(
+            type(self), self.config
+        )
