@@ -1,4 +1,5 @@
 import ast
+import os
 import os.path
 
 from setuptools import find_packages, setup
@@ -26,6 +27,9 @@ docs_require = [
     'sphinx_rtd_theme',
 ] + all_extra_requires
 
+if os.environ.get('READTHEDOCS'):
+    install_requires.extend(docs_require)
+
 
 def get_version():
     with open(os.path.join('settei', 'version.py')) as f:
@@ -49,6 +53,7 @@ setup(
     name='settei',
     version=get_version(),
     description='Configuration loader from a TOML file',
+    url='https://github.com/spoqa/settei',
     license='Apache 2.0',
     author='Spoqa Creators',
     author_email='dev' '@' 'spoqa.com',
