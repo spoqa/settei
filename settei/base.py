@@ -1,9 +1,5 @@
-"""
-settei
-~~~~~~
-
-:copyright: (c) 2016 Spoqa, Inc.
-:license: Apache License 2.0, see LICENSE for more details.
+""":mod:`settei.base` --- Basic app object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 import collections.abc
@@ -14,7 +10,6 @@ import warnings
 
 from pytoml import load
 from tsukkomi.typed import typechecked
-
 
 __all__ = 'Configuration', 'ConfigWarning', 'config_property'
 

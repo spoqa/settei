@@ -4,7 +4,14 @@ import warnings
 
 from pytest import mark, raises
 
-from settei import config_property, Configuration, ConfigWarning
+from settei.base import Configuration, ConfigWarning, config_property
+
+
+def test_package_level_api_compatibility():
+    import settei
+    assert settei.Configuration is Configuration
+    assert settei.ConfigWarning is ConfigWarning
+    assert settei.config_property is config_property
 
 
 class TestConfig(dict):

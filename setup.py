@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 tests_require = [
@@ -20,7 +20,7 @@ setup(
     license='Apache 2.0',
     author='Spoqa Creators',
     author_email='dev' '@' 'spoqa.com',
-    py_modules=['settei'],
+    packages=find_packages(),
     install_requires=install_requires,
     extras_require={
         'tests': tests_require,
