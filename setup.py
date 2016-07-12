@@ -49,6 +49,7 @@ setup(
     name='settei',
     version=get_version(),
     description='Configuration loader from a TOML file',
+    url='https://github.com/spoqa/settei',
     license='Apache 2.0',
     author='Spoqa Creators',
     author_email='dev' '@' 'spoqa.com',
