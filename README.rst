@@ -1,5 +1,5 @@
-設定 (Settei)
-=============
+Settei
+======
 
 .. image:: https://readthedocs.org/projects/settei/badge/?version=latest
    :target: https://settei.readthedocs.io/
@@ -12,7 +12,7 @@
    :target: https://travis-ci.org/spoqa/settei
 
 Configuration utility for common Python applications and services.
-FYI, Settei means settings in Japanese. :)
+FYI, "settei" (設定) means settings in Japanese. :)
 
 
 Loading a configuration is easy
