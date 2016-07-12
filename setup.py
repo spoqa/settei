@@ -1,3 +1,6 @@
+import ast
+import os.path
+
 from setuptools import find_packages, setup
 
 
@@ -13,9 +16,28 @@ docs_require = [
     'Sphinx >= 1.4',
 ]
 
+
+def get_version():
+    with open(os.path.join('settei', 'version.py')) as f:
+        tree = ast.parse(f.read(), f.name)
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Assign) and len(node.targets) == 1):
+                continue
+            target, = node.targets
+            value = node.value
+            if not (isinstance(target, ast.Name) and
+                    target.id == 'VERSION_INFO' and
+                    isinstance(value, ast.Tuple)):
+                continue
+            elts = value.elts
+            if any(not isinstance(elt, ast.Num) for elt in elts):
+                continue
+            return '.'.join(str(elt.n) for elt in elts)
+
+
 setup(
     name='settei',
-    version='0.1.1',
+    version=get_version(),
     description='Configuration loader from a TOML file',
     license='Apache 2.0',
     author='Spoqa Creators',

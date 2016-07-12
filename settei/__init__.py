@@ -6,5 +6,7 @@
 
 """
 from .base import Configuration, ConfigWarning, config_property
+from .version import VERSION
 
 __all__ = 'Configuration', 'ConfigWarning', 'config_property'
+__version__ = VERSION
