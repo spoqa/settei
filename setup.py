@@ -27,9 +27,6 @@ docs_require = [
     'sphinx_rtd_theme',
 ] + all_extra_requires
 
-if os.environ.get('READTHEDOCS'):
-    install_requires.extend(docs_require)
-
 
 def get_version():
     with open(os.path.join('settei', 'version.py')) as f:
