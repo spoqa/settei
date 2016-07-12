@@ -2,15 +2,14 @@
 =============
 
 .. image:: https://readthedocs.org/projects/settei/badge/?version=latest
-   :target: http://settei.readthedocs.org/en/latest/?badge=latest
+   :target: https://settei.readthedocs.io/
    :alt: Documentation Status
 
 .. image:: https://badge.fury.io/py/settei.svg
    :target: https://badge.fury.io/py/settei
 
-.. image:: https://circleci.com/gh/spoqa/settei.svg?style=svg
-    :target: https://circleci.com/gh/spoqa/settei
-
+.. image:: https://travis-ci.org/spoqa/settei.svg
+   :target: https://travis-ci.org/spoqa/settei
 
 Configuration utility for common Python applications and services.
 FYI, Settei means settings in Japanese. :)
