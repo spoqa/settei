@@ -4,14 +4,22 @@ import os.path
 from setuptools import find_packages, setup
 
 
-tests_require = [
-    'pytest >= 2.7.0',
-]
 install_requires = [
     'pytoml >= 0.1.10, < 0.2.0',
     'setuptools',
     'tsukkomi >= 0.0.5',
 ]
+extras_require = {
+    'flask': ['Flask', 'Werkzeug']
+}
+tests_require = [
+    'pytest >= 2.7.0',
+]
+tests_require.extend(
+    package
+    for packages in extras_require.values()
+    for package in packages
+)
 docs_require = [
     'Sphinx >= 1.4',
 ]
@@ -44,10 +52,11 @@ setup(
     author_email='dev' '@' 'spoqa.com',
     packages=find_packages(),
     install_requires=install_requires,
-    extras_require={
-        'tests': tests_require,
-        'docs': docs_require,
-    },
+    extras_require=dict(
+        extras_require,
+        tests=tests_require,
+        docs=docs_require,
+    ),
     tests_require=tests_require,
     classifiers=[
         'Development Status :: 5 - Production/Stable',

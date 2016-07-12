@@ -5,4 +5,5 @@
    .. toctree::
       :maxdepth: 2
 
+      presets/flask
       presets/logging

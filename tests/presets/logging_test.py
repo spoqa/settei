@@ -11,10 +11,12 @@ class TestHandler(logging.Handler):
         self.records.append(self.format(record))
 
 
-def test_configure_logging():
-    a = logging.getLogger('settei.tests.a')
-    b = logging.getLogger('settei.tests.b')
-    c = logging.getLogger('settei.tests.c')
+def test_configure_logging(prefix: str='settei.tests.',
+                           conf_cls: type=LoggingConfiguration):
+    TestHandler.records = []
+    a = logging.getLogger(prefix + 'a')
+    b = logging.getLogger(prefix + 'b')
+    c = logging.getLogger(prefix + 'c')
 
     def log():
         for level in 'debug', 'info', 'warn', 'error':
@@ -26,13 +28,13 @@ def test_configure_logging():
     log()
     assert not TestHandler.records
     handler_typename = '{0.__module__}.{0.__qualname__}'.format(TestHandler)
-    conf = LoggingConfiguration({
+    conf = conf_cls({
         'logging': {
             'version': 1,
             'loggers': {
-                'settei.tests.a': {'handlers': ['testhandler']},
-                'settei.tests.b': {'handlers': ['testhandler']},
-                'settei.tests.c': {'handlers': ['testhandler']},
+                prefix + 'a': {'handlers': ['testhandler']},
+                prefix + 'b': {'handlers': ['testhandler']},
+                prefix + 'c': {'handlers': ['testhandler']},
             },
             'handlers': {
                 'testhandler': {
