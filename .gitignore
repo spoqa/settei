@@ -1,7 +1,9 @@
 *.pyc
 __pycache__
 build/
+dist/
 *.egg-info/
+.cache/
 .tox/
 junit-*.xml
 docs/_build
