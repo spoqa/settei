@@ -10,7 +10,8 @@ install_requires = [
     'tsukkomi >= 0.0.5',
 ]
 extras_require = {
-    'flask': ['Flask', 'Werkzeug']
+    'flask': ['Flask', 'Werkzeug'],
+    'celery': ['celery', 'kombu'],
 }
 tests_require = [
     'pytest >= 2.7.0',
