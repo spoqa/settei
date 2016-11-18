@@ -46,10 +46,19 @@ def get_version():
             return '.'.join(str(elt.n) for elt in elts)
 
 
+def readme():
+    try:
+        with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
+            return f.read()
+    except (IOError, OSError):
+        return
+
+
 setup(
     name='settei',
     version=get_version(),
     description='Configuration loader from a TOML file',
+    long_description=readme(),
     url='https://github.com/spoqa/settei',
     license='Apache 2.0',
     author='Spoqa Creators',
