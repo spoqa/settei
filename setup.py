@@ -1,4 +1,5 @@
 import ast
+import io
 import os
 import os.path
 
@@ -47,8 +48,9 @@ def get_version():
 
 
 def readme():
+    name = os.path.join(os.path.dirname(__file__), 'README.rst')
     try:
-        with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
+        with io.open(name, encoding='utf-8') as f:
             return f.read()
     except (IOError, OSError):
         return
