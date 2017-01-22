@@ -5,7 +5,7 @@
 import collections.abc
 import typing
 
-from tsukkomi.typed import typechecked
+from typeguard import typechecked
 from werkzeug.datastructures import ImmutableDict
 from werkzeug.utils import cached_property
 

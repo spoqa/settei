@@ -4,7 +4,15 @@ import warnings
 
 from pytest import mark, raises
 
-from settei.base import Configuration, ConfigWarning, config_property
+from settei.base import (Configuration, ConfigWarning,
+                         config_property, get_union_types)
+
+
+def test_get_union_types():
+    assert get_union_types(typing.Union[int, str]) == (int, str)
+    assert get_union_types(typing.Union[bool, list, set]) == (bool, list, set)
+    assert get_union_types(str) is None
+    assert get_union_types('asdf') is None
 
 
 def test_package_level_api_compatibility():

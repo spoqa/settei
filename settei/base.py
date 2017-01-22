@@ -9,9 +9,33 @@ import typing
 import warnings
 
 from pytoml import load
-from tsukkomi.typed import typechecked
+from typeguard import typechecked
 
-__all__ = 'Configuration', 'ConfigWarning', 'config_property'
+__all__ = ('Configuration', 'ConfigWarning',
+           'config_property', 'get_union_types')
+
+
+if hasattr(typing, 'UnionMeta'):
+    def get_union_types(type_) -> bool:
+        """Return a :class:`tuple` of the given :class:`~typing.Union`
+        ``type_``'s parameters.
+
+        >>> get_union_types(typing.Union[int, str, bool])
+        (int, str, bool)
+
+        If it's not an :class:`~typing.Union` type or even not a type
+        it returns :const:`None`.
+
+        .. versionadded:: 0.3.0
+
+        """
+        if isinstance(type_, typing.UnionMeta):
+            return type_.__union_params__
+else:
+    # For older versions of typing
+    def get_union_types(type_) -> bool:
+        if type(type_) is typing._Union:
+            return type_.__args__
 
 
 class config_property:
@@ -46,8 +70,7 @@ class config_property:
     """
 
     @typechecked
-    def __init__(self, key: str, cls: type, docstring: str=None,
-                 **kwargs) -> None:
+    def __init__(self, key: str, cls, docstring: str=None, **kwargs) -> None:
         self.key = key
         self.cls = cls
         self.__doc__ = docstring
@@ -94,16 +117,12 @@ class config_property:
                         )
                     return default
                 raise
-        if isinstance(self.cls, typing.UnionMeta):
-            cls = self.cls.__union_params__
-            clsrepr = repr(cls)
-        else:
-            cls = self.cls
-            clsrepr = '{0.__module__}.{0.__qualname__}'.format(cls)
+        union_types = get_union_types(self.cls)
+        cls = self.cls if union_types is None else union_types
         if not isinstance(value, cls):
             raise TypeError(
                 '{0} configuration must be {1}, not {2!r}'.format(
-                    self.key, clsrepr, value
+                    self.key, typing._type_repr(self.cls), value
                 )
             )
         return value
