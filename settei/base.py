@@ -13,7 +13,7 @@ import warnings
 from pytoml import load
 from typeguard import typechecked
 
-__all__ = ('Configuration', 'ConfigWarning',
+__all__ = ('ConfigError', 'ConfigKeyError', 'Configuration', 'ConfigWarning',
            'config_property', 'get_union_types')
 
 
@@ -69,6 +69,12 @@ class config_property:
                             value is provided
     :type default_warning: :class:`bool`
 
+    .. versionchanged:: 0.4.0
+
+       Prior to 0.4.0, it had raised Python's built-in :exc:`KeyError` on
+       missing keys, but since 0.4.0 it became to raise :exc:`ConfigKeyError`,
+       a subtype of :exc:`KeyError`, instead.
+
     """
 
     @typechecked
@@ -118,7 +124,7 @@ class config_property:
                             stacklevel=2
                         )
                     return default
-                raise
+                raise ConfigKeyError(key)
         union_types = get_union_types(self.cls)
         cls = self.cls if union_types is None else union_types
         if not isinstance(value, cls):
@@ -140,6 +146,24 @@ class config_property:
         )
 
 
+class ConfigError(RuntimeError):
+    """The base exception class for errors releated to :class:`Configuration`
+    and :func:`config_property`.
+
+    .. versionadded:: 0.4.0
+
+    """
+
+
+class ConfigKeyError(KeyError, ConfigError):
+    """An exception class rises when there's no a configuration key.
+    A subtype of :exc:`ConfigError` and :exc:`KeyError`.
+
+    .. versionadded:: 0.4.0
+
+    """
+
+
 class ConfigWarning(RuntimeWarning):
     """Warning category which raised when a default configuration is used
     instead due to missing required configuration.
@@ -152,7 +176,14 @@ class Configuration(collections.abc.Mapping):
     read-only :class:`~collections.abc.Mapping` protocol as well, so you
     can treat it as a dictionary of string keys.
 
+    .. versionchanged:: 0.4.0
+
+       Prior to 0.4.0, it had raised Python's built-in :exc:`KeyError` on
+       missing keys, but since 0.4.0 it became to raise :exc:`ConfigKeyError`,
+       a subtype of :exc:`KeyError`, instead.
+
     """
+
     @classmethod
     def from_file(cls, file) -> 'Configuration':
         """Load settings from the given ``file`` and instantiate an
@@ -194,8 +225,11 @@ class Configuration(collections.abc.Mapping):
 
     def __getitem__(self, key: str):
         if isinstance(key, str):
-            return self.config[key]
-        raise KeyError(key)
+            try:
+                return self.config[key]
+            except KeyError:
+                pass
+        raise ConfigKeyError(key)
 
     def __repr__(self) -> str:
         return '{0.__module__}.{0.__qualname__}({1!r})'.format(

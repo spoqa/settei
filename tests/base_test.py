@@ -4,7 +4,7 @@ import warnings
 
 from pytest import mark, raises
 
-from settei.base import (Configuration, ConfigWarning,
+from settei.base import (ConfigKeyError, Configuration, ConfigWarning,
                          config_property, get_union_types)
 
 
@@ -77,7 +77,7 @@ def test_config_property(union_value: typing.Union[int, str]):
 
 def test_config_property_absence():
     c = TestConfig()
-    with raises(KeyError):
+    with raises(ConfigKeyError):
         c.depth1_required
     with warnings.catch_warnings(record=True) as w:
         assert c.depth1_optional == ''
@@ -93,7 +93,7 @@ def test_config_property_absence():
         assert c.depth1_default_func_warn == ''
         assert len(w) == 1
         assert issubclass(w[-1].category, ConfigWarning)
-    with raises(KeyError):
+    with raises(ConfigKeyError):
         c.depth2_required
     with warnings.catch_warnings(record=True) as w:
         assert c.depth2_optional is None
@@ -102,13 +102,13 @@ def test_config_property_absence():
         assert c.depth2_warn is None
         assert len(w) == 1
         assert issubclass(w[-1].category, ConfigWarning)
-    with raises(KeyError):
+    with raises(ConfigKeyError):
         c.union
 
 
 def test_config_property_absence_2nd_depth():
     c = TestConfig(section={})
-    with raises(KeyError):
+    with raises(ConfigKeyError):
         c.depth2_required
     with warnings.catch_warnings(record=True) as w:
         assert c.depth2_optional is None

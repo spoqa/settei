@@ -6,6 +6,11 @@ Verison 0.4.0
 
 To be released.
 
+- :exc:`~settei.base.ConfigError`, and :exc:`~settei.base.ConfigKeyError`.
+  Prior to 0.4.0, :class:`~settei.base.Configuration` had raised Python's
+  built-in :exc:`KeyError` on missing keys, but since 0.4.0 it became to raise
+  :exc:`~settei.base.ConfigKeyError`, a subtype of :exc:`KeyError`, instead.
+
 
 Version 0.3.0
 -------------
