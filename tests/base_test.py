@@ -5,8 +5,9 @@ import warnings
 from pytest import mark, raises
 
 from settei.base import (ConfigKeyError, ConfigTypeError,
-                         Configuration, ConfigWarning,
-                         config_property, get_union_types)
+                         Configuration, ConfigValueError, ConfigWarning,
+                         config_object_property, config_property,
+                         get_union_types)
 
 
 def test_get_union_types():
@@ -129,6 +130,83 @@ def test_config_property_type_error():
         'default should be possible to bypass typecheck'
     assert isinstance(c2.depth1_default_func, str), \
         'default_func should be possible to bypass typecheck'
+
+
+class SampleInterface:
+
+    pass
+
+
+class Impl(SampleInterface):
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.args = args
+        self.kwargs = kwargs
+
+
+class TestAppConfigObject(Configuration):
+    no_default = config_object_property('sample.a', SampleInterface)
+    with_default = config_object_property('sample.b', SampleInterface,
+                                          default=Impl('default'))
+
+
+def test_config_object_property():
+    c = TestAppConfigObject(sample={
+        'a': {
+            'class': __name__ + ':Impl',
+            '*': ['a', 'b', 'c'],
+            'd': 4,
+            'e': 5,
+        },
+    })
+    v = c.no_default
+    assert isinstance(v, Impl)
+    assert v.args == ('a', 'b', 'c')
+    assert v.kwargs == {'d': 4, 'e': 5}
+
+
+def test_config_object_property_not_dict_error():
+    c = TestAppConfigObject(sample={'a': 'Not dict'})
+    with raises(ConfigTypeError):
+        c.no_default
+
+
+def test_config_object_property_no_class_field_error():
+    c = TestAppConfigObject(sample={'a': {}})
+    with raises(ConfigValueError):
+        c.no_default
+
+
+def test_config_object_property_invalid_class_field_error():
+    invalid_syntax = TestAppConfigObject(sample={
+        'a': {'class': 'invalid.import.path'},
+    })
+    with raises(ConfigValueError):
+        invalid_syntax.no_default
+    invalid_type = TestAppConfigObject(sample={
+        'a': {'class': 'os.path:supports_unicode_filenames'},
+    })
+    with raises(ConfigValueError):
+        invalid_type.no_default
+
+
+def test_config_object_property_invalid_args_error():
+    non_list = TestAppConfigObject(sample={
+        'a': {
+            'class': __name__ + ':Impl',
+            '*': 123,  # must be a list, but it's an integer, which is wrong
+        },
+    })
+    with raises(ConfigValueError):
+        non_list.no_default
+    string = TestAppConfigObject(sample={
+        'a': {
+            'class': __name__ + ':Impl',
+            '*': 'abc',  # string is not valid either
+        },
+    })
+    with raises(ConfigValueError):
+        string.no_default
 
 
 def test_app_from_file(tmpdir):

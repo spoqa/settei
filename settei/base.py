@@ -5,7 +5,9 @@
 
 """
 import collections.abc
+import functools
 import pathlib
+import re
 import textwrap
 import typing
 import warnings
@@ -14,8 +16,8 @@ from pytoml import load
 from typeguard import typechecked
 
 __all__ = ('ConfigError', 'ConfigKeyError', 'ConfigTypeError',
-           'Configuration', 'ConfigWarning',
-           'config_property', 'get_union_types')
+           'Configuration', 'ConfigValueError', 'ConfigWarning',
+           'config_object_property', 'config_property', 'get_union_types')
 
 
 if hasattr(typing, 'UnionMeta'):
@@ -160,6 +162,113 @@ class config_property:
         )
 
 
+class config_object_property(config_property):
+    """Similar to :class:`config_property` except it purposes to reprsent
+    more complex objects than simple values.  It can be utilized as dependency
+    injector.
+
+    Suppose a field declared as::
+
+        from werkzeug.contrib.cache import BaseCache
+
+        class App(Configuration):
+            cache = config_object_property('cache', BaseCache)
+
+    Also a configuration:
+
+    .. code-block:: toml
+
+       [cache]
+       class = "werkzeug.contrib.cache:RedisCache"
+       host = "a.nodes.redis-cluster.local"
+       port = 6379
+       db = 0
+
+    The above instantiates the following object::
+
+        from werkzeug.contrib.cache import RedisCache
+        RedisCache(host='a.nodes.redis-cluster.local', port=6380, db=0)
+
+    There's a special field named ``*`` which is for positional arguments
+    as well:
+
+    .. code-block:: toml
+
+       [cache]
+       class = "werkzeug.contrib.cache:RedisCache"
+       "*" = [
+           "a.nodes.redis-cluster.local",
+           6379,
+       ]
+       db = 0
+
+    The above configuration is equivalent to the following Python code:
+
+        from werkzeug.contrib.cache import RedisCache
+        RedisCache('a.nodes.redis-cluster.local', 6380, db=0)
+
+    .. versionadded:: 0.4.0
+
+    """
+
+    CLASS_RE = re.compile(
+        r'^(?P<path>(?:(?:^|\.)[^\d\W]\w*)+)?:'
+        r'(?P<name>[^\d\W]\w*)$',
+        re.UNICODE
+    )
+
+    def __get__(self, obj, cls: typing.Optional[type]=None):
+        if obj is None:
+            return self
+        default, value = self.get_raw_value(obj)
+        if not default:
+            if not isinstance(value, collections.abc.Mapping):
+                raise ConfigTypeError(
+                    '{0!r} field must be a mapping, not {1}'.format(
+                        self.key, typing._type_repr(type(value))
+                    )
+                )
+            try:
+                import_path = value['class']
+            except KeyError:
+                raise ConfigValueError(
+                    '{0!r} field lacks "class" field'.format(self.key)
+                )
+            f = self.import_(import_path)
+            args = value.get('*', ())
+            if isinstance(args, str) or \
+               not isinstance(args, collections.abc.Sequence):
+                raise ConfigValueError(
+                    '{0!r} field must be a list, not {1!r}'.format(
+                        self.key + '.*', args
+                    )
+                )
+            kw = {k: v for k, v in value.items() if k not in ('class', '*')}
+            value = f(*args, **kw)
+            self.typecheck(value)
+        return value
+
+    def import_(self, import_path: str) -> collections.abc.Callable:
+        m = self.CLASS_RE.match(import_path)
+        class_key = self.key + '.class'
+        if not m:
+            raise ConfigValueError(
+                '{0!r} must be a valid import path '
+                '(e.g. "module.path:cls_or_func"), not {1!r}'.format(
+                    class_key, import_path
+                )
+            )
+        path = m.group('path')
+        v = __import__(path)
+        keys = path.split('.')[1:]
+        keys.append(m.group('name'))
+        f = functools.reduce(getattr, keys, v)
+        if not callable(f):
+            raise ConfigValueError('{0!r} must refer to a callable, but {1!r} '
+                                   'is not callable'.format(class_key, f))
+        return f
+
+
 class ConfigError(RuntimeError):
     """The base exception class for errors releated to :class:`Configuration`
     and :func:`config_property`.
@@ -172,6 +281,15 @@ class ConfigError(RuntimeError):
 class ConfigKeyError(KeyError, ConfigError):
     """An exception class rises when there's no a configuration key.
     A subtype of :exc:`ConfigError` and :exc:`KeyError`.
+
+    .. versionadded:: 0.4.0
+
+    """
+
+
+class ConfigValueError(ValueError, ConfigError):
+    """An execption class rises when the configured value is somewhat
+    invalid.
 
     .. versionadded:: 0.4.0
 
