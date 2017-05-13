@@ -4,7 +4,8 @@ import warnings
 
 from pytest import mark, raises
 
-from settei.base import (ConfigKeyError, Configuration, ConfigWarning,
+from settei.base import (ConfigKeyError, ConfigTypeError,
+                         Configuration, ConfigWarning,
                          config_property, get_union_types)
 
 
@@ -117,6 +118,17 @@ def test_config_property_absence_2nd_depth():
         assert c.depth2_warn is None
         assert len(w) == 1
         assert issubclass(w[-1].category, ConfigWarning)
+
+
+def test_config_property_type_error():
+    c = TestConfig(key='not an integer')
+    with raises(ConfigTypeError):
+        c.depth1_required
+    c2 = TestConfig()
+    assert isinstance(c2.depth1_optional, str), \
+        'default should be possible to bypass typecheck'
+    assert isinstance(c2.depth1_default_func, str), \
+        'default_func should be possible to bypass typecheck'
 
 
 def test_app_from_file(tmpdir):

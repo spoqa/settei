@@ -6,10 +6,18 @@ Verison 0.4.0
 
 To be released.
 
-- :exc:`~settei.base.ConfigError`, and :exc:`~settei.base.ConfigKeyError`.
+- :exc:`~settei.base.ConfigError`, :exc:`~settei.base.ConfigKeyError`, and
+  :exc:`~settei.base.ConfigTypeError`.
+
   Prior to 0.4.0, :class:`~settei.base.Configuration` had raised Python's
   built-in :exc:`KeyError` on missing keys, but since 0.4.0 it became to raise
   :exc:`~settei.base.ConfigKeyError`, a subtype of :exc:`KeyError`, instead.
+
+  In the same manner, while prior to 0.4.0, it had raised Python's
+  built-in :exc:`TypeError` when a configured value is not of a type it expects,
+  but since 0.4.0 it became to raise :exc:`~settei.base.ConfigTypeError`
+  instead.  :exc:`~settei.base.ConfigTypeError` is also a subtype of
+  :class:`TypeError`.
 
 
 Version 0.3.0

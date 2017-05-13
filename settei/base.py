@@ -13,7 +13,8 @@ import warnings
 from pytoml import load
 from typeguard import typechecked
 
-__all__ = ('ConfigError', 'ConfigKeyError', 'Configuration', 'ConfigWarning',
+__all__ = ('ConfigError', 'ConfigKeyError', 'ConfigTypeError',
+           'Configuration', 'ConfigWarning',
            'config_property', 'get_union_types')
 
 
@@ -75,6 +76,11 @@ class config_property:
        missing keys, but since 0.4.0 it became to raise :exc:`ConfigKeyError`,
        a subtype of :exc:`KeyError`, instead.
 
+       In the same manner, while prior to 0.4.0, it had raised Python's
+       built-in :exc:`TypeError` when a configured value is not of a type
+       it expects, but since 0.4.0 it became to raise :exc:`ConfigTypeError`
+       instead. :exc:`ConfigTypeError` is also a subtype of :class:`TypeError`.
+
     """
 
     @typechecked
@@ -108,6 +114,12 @@ class config_property:
     def __get__(self, obj, cls: typing.Optional[type]=None):
         if obj is None:
             return self
+        default, value = self.get_raw_value(obj)
+        if not default:
+            self.typecheck(value)
+        return value
+
+    def get_raw_value(self, obj) -> typing.Tuple[bool, object]:
         value = obj
         for key in self.key.split('.'):
             try:
@@ -121,19 +133,21 @@ class config_property:
                                 self.key, default
                             ),
                             ConfigWarning,
-                            stacklevel=2
+                            stacklevel=3
                         )
-                    return default
+                    return True, default
                 raise ConfigKeyError(key)
+        return False, value
+
+    def typecheck(self, value) -> None:
         union_types = get_union_types(self.cls)
         cls = self.cls if union_types is None else union_types
         if not isinstance(value, cls):
-            raise TypeError(
+            raise ConfigTypeError(
                 '{0} configuration must be {1}, not {2!r}'.format(
                     self.key, typing._type_repr(self.cls), value
                 )
             )
-        return value
 
     @property
     def docstring(self) -> str:
@@ -158,6 +172,15 @@ class ConfigError(RuntimeError):
 class ConfigKeyError(KeyError, ConfigError):
     """An exception class rises when there's no a configuration key.
     A subtype of :exc:`ConfigError` and :exc:`KeyError`.
+
+    .. versionadded:: 0.4.0
+
+    """
+
+
+class ConfigTypeError(TypeError, ConfigError):
+    """An exception class rises when the configured value is not of a type
+    the field expects.
 
     .. versionadded:: 0.4.0
 
