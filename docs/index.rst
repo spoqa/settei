@@ -5,14 +5,11 @@
 
 .. include:: ../README.rst
 
-
-References
-----------
-
 .. toctree::
    :maxdepth: 3
 
    settei
+   changes
 
 
 Indices and tables

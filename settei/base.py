@@ -1,6 +1,8 @@
 """:mod:`settei.base` --- Basic app object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. versionadded:: 0.2.0
+
 """
 import collections.abc
 import pathlib

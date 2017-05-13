@@ -1,6 +1,8 @@
 """:mod:`settei.version` --- Version data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. versionadded:: 0.2.0
+
 """
 
 #: (:class:`typing.Tuple`\ [:class:`int`, :class:`int`, :class:`int`])
