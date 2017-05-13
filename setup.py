@@ -66,6 +66,7 @@ setup(
     author='Spoqa Creators',
     author_email='dev' '@' 'spoqa.com',
     packages=find_packages(),
+    python_requires='>=3.4.0',
     install_requires=install_requires,
     extras_require=dict(
         extras_require,
@@ -78,6 +79,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3 :: Only',
         'Intended Audience :: Developers',
         'Topic :: Software Development',
