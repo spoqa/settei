@@ -13,7 +13,8 @@ import warnings
 from pytoml import load
 from typeguard import typechecked
 
-__all__ = ('Configuration', 'ConfigWarning',
+__all__ = ('ConfigError', 'ConfigKeyError', 'ConfigTypeError',
+           'Configuration', 'ConfigWarning',
            'config_property', 'get_union_types')
 
 
@@ -69,6 +70,17 @@ class config_property:
                             value is provided
     :type default_warning: :class:`bool`
 
+    .. versionchanged:: 0.4.0
+
+       Prior to 0.4.0, it had raised Python's built-in :exc:`KeyError` on
+       missing keys, but since 0.4.0 it became to raise :exc:`ConfigKeyError`,
+       a subtype of :exc:`KeyError`, instead.
+
+       In the same manner, while prior to 0.4.0, it had raised Python's
+       built-in :exc:`TypeError` when a configured value is not of a type
+       it expects, but since 0.4.0 it became to raise :exc:`ConfigTypeError`
+       instead. :exc:`ConfigTypeError` is also a subtype of :class:`TypeError`.
+
     """
 
     @typechecked
@@ -102,6 +114,12 @@ class config_property:
     def __get__(self, obj, cls: typing.Optional[type]=None):
         if obj is None:
             return self
+        default, value = self.get_raw_value(obj)
+        if not default:
+            self.typecheck(value)
+        return value
+
+    def get_raw_value(self, obj) -> typing.Tuple[bool, object]:
         value = obj
         for key in self.key.split('.'):
             try:
@@ -115,19 +133,21 @@ class config_property:
                                 self.key, default
                             ),
                             ConfigWarning,
-                            stacklevel=2
+                            stacklevel=3
                         )
-                    return default
-                raise
+                    return True, default
+                raise ConfigKeyError(key)
+        return False, value
+
+    def typecheck(self, value) -> None:
         union_types = get_union_types(self.cls)
         cls = self.cls if union_types is None else union_types
         if not isinstance(value, cls):
-            raise TypeError(
+            raise ConfigTypeError(
                 '{0} configuration must be {1}, not {2!r}'.format(
                     self.key, typing._type_repr(self.cls), value
                 )
             )
-        return value
 
     @property
     def docstring(self) -> str:
@@ -138,6 +158,33 @@ class config_property:
         return '{0.__module__}.{0.__qualname__}({1!r})'.format(
             type(self), self.key
         )
+
+
+class ConfigError(RuntimeError):
+    """The base exception class for errors releated to :class:`Configuration`
+    and :func:`config_property`.
+
+    .. versionadded:: 0.4.0
+
+    """
+
+
+class ConfigKeyError(KeyError, ConfigError):
+    """An exception class rises when there's no a configuration key.
+    A subtype of :exc:`ConfigError` and :exc:`KeyError`.
+
+    .. versionadded:: 0.4.0
+
+    """
+
+
+class ConfigTypeError(TypeError, ConfigError):
+    """An exception class rises when the configured value is not of a type
+    the field expects.
+
+    .. versionadded:: 0.4.0
+
+    """
 
 
 class ConfigWarning(RuntimeWarning):
@@ -152,7 +199,14 @@ class Configuration(collections.abc.Mapping):
     read-only :class:`~collections.abc.Mapping` protocol as well, so you
     can treat it as a dictionary of string keys.
 
+    .. versionchanged:: 0.4.0
+
+       Prior to 0.4.0, it had raised Python's built-in :exc:`KeyError` on
+       missing keys, but since 0.4.0 it became to raise :exc:`ConfigKeyError`,
+       a subtype of :exc:`KeyError`, instead.
+
     """
+
     @classmethod
     def from_file(cls, file) -> 'Configuration':
         """Load settings from the given ``file`` and instantiate an
@@ -194,8 +248,11 @@ class Configuration(collections.abc.Mapping):
 
     def __getitem__(self, key: str):
         if isinstance(key, str):
-            return self.config[key]
-        raise KeyError(key)
+            try:
+                return self.config[key]
+            except KeyError:
+                pass
+        raise ConfigKeyError(key)
 
     def __repr__(self) -> str:
         return '{0.__module__}.{0.__qualname__}({1!r})'.format(
