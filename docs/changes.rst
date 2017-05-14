@@ -4,7 +4,7 @@ Changlog
 Verison 0.4.0
 -------------
 
-To be released.
+Released on May 14, 2017.
 
 - :class:`~settei.base.config_object_property` was added.  It's a kind of
   dependency injection, but very limited version.
