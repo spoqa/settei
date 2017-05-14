@@ -1,0 +1,75 @@
+Changlog
+========
+
+Verison 0.4.0
+-------------
+
+To be released.
+
+
+Version 0.3.0
+-------------
+
+Released on January 22, 2017.
+
+- As tsukkomi_ is now abandoned, it's replaced by typeguard_.
+
+.. _typeguard: https://github.com/agronholm/typeguard
+
+
+Version 0.2.2
+-------------
+
+Released on November 18, 2016.  Note that the version 0.2.1 has never been
+released due to our mistake on versioning.
+
+- :class:`~settei.presets.celery.WorkerConfiguration` became to have
+  :attr:`~settei.presets.celery.WorkerConfiguration.worker_schedule`
+  config property to configure Celery beat --- Celery's periodic tasks.
+
+
+Version 0.2.0
+-------------
+
+Released on July 13, 2016.
+
+- :mod:`settei` became a package (had been a module), which contains
+  :mod:`settei.base` module.
+- :class:`settei.Configuration`, :class:`settei.ConfigWarning`, and
+  :class:`settei.config_property` were moved to :mod:`settei.base` module.
+  Although aliases for these previous import paths will be there for a while,
+  we recommend to import them from :mod:`settei.base` mdoule since they are
+  deprecated.
+
+- Presets were introduced: :mod:`settei.presets`.
+
+  - :mod:`settei.presets.celery` is for configuring Celery_ apps.
+  - :mod:`settei.presets.flask` is for configuring Flask_ web apps.
+  - :mod:`settei.presets.logging` is for configuring Python standard
+    :mod:`logging` system.
+
+- :mod:`settei.version` module was added.
+- typeannotations_ was replaced by tsukkomi_.
+- Settei now requires pytoml_ 0.1.10 or higher.  (It had required 0.1.7 or
+  higher.)
+
+.. _Celery: http://www.celeryproject.org/
+.. _flask: http://flask.pocoo.org/
+.. _typeannotations: https://github.com/ceronman/typeannotations
+.. _tsukkomi: https://github.com/spoqa/tsukkomi
+.. _pytoml: https://github.com/avakar/pytoml
+
+
+Version 0.1.1
+-------------
+
+Released on April 15, 2016.
+
+- :class:`settei.base.config_property` became to support :data:`typing.Union`
+  type.
+
+
+Version 0.1.0
+-------------
+
+Released on April 1, 2016.  Initial release.

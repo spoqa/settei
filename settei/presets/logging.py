@@ -1,6 +1,8 @@
 """:mod:`settei.presets.logging` --- Preset for :mod:`logging` configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. versionadded:: 0.2.0
+
 Preset for apps holding :mod:`logging` configuration.  Logging can be
 configured through TOML file e.g.:
 

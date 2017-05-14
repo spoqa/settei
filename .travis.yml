@@ -5,4 +5,7 @@ python:
 - 3.6
 install:
 - pip install tox-travis
-script: tox
+script:
+- tox
+# Ensure changelog was written:
+- git diff --name-only "$TRAVIS_COMMIT_RANGE" | grep docs/changes.rst

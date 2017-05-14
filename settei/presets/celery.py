@@ -105,7 +105,7 @@ class WorkerConfiguration(LoggingConfiguration):
 
         http://docs.celeryproject.org/en/latest/userguide/periodic-tasks.html
 
-        .. versionadded:: 0.2.1
+        .. versionadded:: 0.2.2
 
         """
         raw_config = self.config.get('worker', {})

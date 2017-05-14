@@ -1,6 +1,8 @@
 """:mod:`settei.presets.flask` --- Preset for Flask apps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. versionadded:: 0.2.0
+
 """
 import collections.abc
 import typing
