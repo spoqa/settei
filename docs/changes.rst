@@ -6,8 +6,11 @@ Verison 0.4.0
 
 To be released.
 
-- :exc:`~settei.base.ConfigError`, :exc:`~settei.base.ConfigKeyError`, and
-  :exc:`~settei.base.ConfigTypeError`.
+- :class:`~settei.base.config_object_property` was added.  It's a kind of
+  dependency injection, but very limited version.
+
+- :exc:`~settei.base.ConfigError`, :exc:`~settei.base.ConfigKeyError`,
+  :exc:`~settei.base.ConfigTypeError`, and :exc:`~settei.base.ConfigValueError`.
 
   Prior to 0.4.0, :class:`~settei.base.Configuration` had raised Python's
   built-in :exc:`KeyError` on missing keys, but since 0.4.0 it became to raise
