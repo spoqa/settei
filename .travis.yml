@@ -22,5 +22,10 @@ script:
                  | jq --raw-output '.base.sha')"
       CHANGE_RANGE="${PR_BASE}..${TRAVIS_PULL_REQUEST_SHA}"
     fi
-    git diff --name-only "$CHANGE_RANGE" | grep docs/changes.rst
+    if git show --format=%B --quiet "$CHANGE_RANGE" \
+       | grep '\[changelog skip\]' > /dev/null; then
+      echo "Skip changelog checker..."
+    else
+      git diff --name-only "$CHANGE_RANGE" | grep docs/changes.rst
+    fi
 - '[[ "$TRAVIS_TAG" = "" ]] || ! grep -i "to be released" docs/changes.rst'
