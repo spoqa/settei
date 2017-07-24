@@ -3,10 +3,29 @@ python:
 - 3.4
 - 3.5
 - 3.6
+addons:
+  apt:
+    packages:
+    - jq
 install:
 - pip install tox-travis
 script:
 - tox
 # Ensure changelog was written:
-- git diff --name-only "${TRAVIS_COMMIT_RANGE}${TRAVIS_TAG}" | grep docs/changes.rst
-- '[[ "$TRAVIS_TAG" = "" ]] || grep -i "to be released" docs/changes.rst'
+- |
+    if [[ "$TRAVIS_PULL_REQUEST" = "false" ]]; then
+      CHANGE_RANGE="${TRAVIS_COMMIT_RANGE}${TRAVIS_TAG}"
+    else
+      curl -L http://github.com/micha/jsawk/raw/master/jsawk > /tmp/jsawk
+      chmod +x /tmp/jsawk
+      PR_BASE="$(curl -vf https://api.github.com/repos/$TRAVIS_REPO_SLUG/pulls/$TRAVIS_PULL_REQUEST.json \
+                 | jq --raw-output '.base.sha')"
+      CHANGE_RANGE="${PR_BASE}..${TRAVIS_PULL_REQUEST_SHA}"
+    fi
+    if git show --format=%B --quiet "$CHANGE_RANGE" \
+       | grep '\[changelog skip\]' > /dev/null; then
+      echo "Skip changelog checker..."
+    else
+      git diff --name-only "$CHANGE_RANGE" | grep docs/changes.rst
+    fi
+- '[[ "$TRAVIS_TAG" = "" ]] || ! grep -i "to be released" docs/changes.rst'
