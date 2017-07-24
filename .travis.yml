@@ -13,14 +13,16 @@ script:
 - tox
 # Ensure changelog was written:
 - |
-    if [[ "$TRAVIS_PULL_REQUEST" = "false" ]]; then
-      CHANGE_RANGE="${TRAVIS_COMMIT_RANGE}${TRAVIS_TAG}"
-    else
+    if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
       curl -L http://github.com/micha/jsawk/raw/master/jsawk > /tmp/jsawk
       chmod +x /tmp/jsawk
       PR_BASE="$(curl -vf https://api.github.com/repos/$TRAVIS_REPO_SLUG/pulls/$TRAVIS_PULL_REQUEST.json \
                  | jq --raw-output '.base.sha')"
       CHANGE_RANGE="${PR_BASE}..${TRAVIS_PULL_REQUEST_SHA}"
+    elif [[ "$TRAVIS_TAG" != "" ]]; then
+      CHANGE_RANGE="${TRAVIS_TAG}^1..${TRAVIS_TAG}"
+    else
+      CHANGE_RANGE="${TRAVIS_COMMIT_RANGE}"
     fi
     if git show --format=%B --quiet "$CHANGE_RANGE" \
        | grep '\[changelog skip\]' > /dev/null; then
