@@ -6,6 +6,10 @@ Version 0.5.0
 
 To be released.
 
+- Added ``recurse`` option to :class:`~settei.base.config_object_property`.
+  If it's :const:`True` nested tables are also evaluated.  :const:`False` by
+  default for backward compatibility.
+
 
 Verison 0.4.0
 -------------

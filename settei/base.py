@@ -202,12 +202,68 @@ class config_object_property(config_property):
        ]
        db = 0
 
-    The above configuration is equivalent to the following Python code:
+    The above configuration is equivalent to the following Python code::
 
         from werkzeug.contrib.cache import RedisCache
         RedisCache('a.nodes.redis-cluster.local', 6380, db=0)
 
+    By default it doesn't recursively evaluate.  For example, the following
+    configuration:
+
+    .. code-block:: toml
+
+       [field]
+       class = "a:ClassA"
+       [field.value]
+       class = "b:ClassB"
+       [field.value.value]
+       class = "c:ClassC"
+
+    is evaluated to::
+
+        from a import ClassA
+        ClassA(value={'class': 'b:ClassB', 'value': {'class': 'c:ClassC'}})
+
+    If ``recurse=True`` option is provided, it evaluates nested tables too::
+
+        from a import ClassA
+        from b import ClassB
+        from c import ClassC
+
+        ClassA(value=ClassB(value=ClassC()))
+
+    :param key: the dotted string of key path.  for example ``abc.def`` looks
+                up ``config['abc']['def']``
+    :type key: :class:`str`
+    :param cls: the allowed type of the configuration
+    :type cls: :class:`type`
+    :param docstring: optional documentation about the configuration.
+                      it will be set to :attr:`__doc__` attribute
+    :type docstring: :class:`str`
+    :param recurse: whether to evaluate nested tables as well.
+                    :const:`False` by default
+    :type recurse: :class:`bool`
+    :param default: keyword only argument.
+                    optional default value used for missing case.
+                    cannot be used with ``default_func`` at a time
+    :param default_func: keyword only argument.
+                         optional callable which returns a default value
+                         for missing case.
+                         it has to take an :class:`App` mapping, and return
+                         a default value.
+                         cannot be used with ``default`` at a time
+    :type default_func: :class:`collections.abc.Callable`
+    :param default_warning: keyword only argument.
+                            whether to warn when default value is used.
+                            does not warn by default.
+                            this option is only available when ``default``
+                            value is provided
+    :type default_warning: :class:`bool`
+
     .. versionadded:: 0.4.0
+
+    .. versionadded:: 0.5.0
+       The ``recurse`` option.
 
     """
 
@@ -217,36 +273,50 @@ class config_object_property(config_property):
         re.UNICODE
     )
 
+    @typechecked
+    def __init__(self, key: str, cls, docstring: str=None, recurse: bool=False,
+                 **kwargs) -> None:
+        super().__init__(key=key, cls=cls, docstring=docstring, **kwargs)
+        self.recurse = recurse
+
     def __get__(self, obj, cls: typing.Optional[type]=None):
         if obj is None:
             return self
-        default, value = self.get_raw_value(obj)
+        default, expression = self.get_raw_value(obj)
         if not default:
-            if not isinstance(value, collections.abc.Mapping):
+            if not isinstance(expression, collections.abc.Mapping):
                 raise ConfigTypeError(
                     '{0!r} field must be a mapping, not {1}'.format(
-                        self.key, typing._type_repr(type(value))
+                        self.key, typing._type_repr(type(expression))
                     )
                 )
-            try:
-                import_path = value['class']
-            except KeyError:
+            elif 'class' not in expression:
                 raise ConfigValueError(
                     '{0!r} field lacks "class" field'.format(self.key)
                 )
-            f = self.import_(import_path)
-            args = value.get('*', ())
-            if isinstance(args, str) or \
-               not isinstance(args, collections.abc.Sequence):
-                raise ConfigValueError(
-                    '{0!r} field must be a list, not {1!r}'.format(
-                        self.key + '.*', args
-                    )
-                )
-            kw = {k: v for k, v in value.items() if k not in ('class', '*')}
-            value = f(*args, **kw)
+            value = self.evaluate(expression)
             self.typecheck(value)
         return value
+
+    def evaluate(self, expression) -> object:
+        if not isinstance(expression, collections.abc.Mapping):
+            return expression
+        try:
+            import_path = expression['class']
+        except KeyError:
+            return expression
+        f = self.import_(import_path)
+        args = expression.get('*', ())
+        if isinstance(args, str) or \
+           not isinstance(args, collections.abc.Sequence):
+            raise ConfigValueError(
+                '"*" field must be a list, not ' + repr(args)
+            )
+        kw = {k: v for k, v in expression.items() if k not in ('class', '*')}
+        if self.recurse:
+            args = map(self.evaluate, args)
+            kw = {k: self.evaluate(v) for k, v in kw.items()}
+        return f(*args, **kw)
 
     def import_(self, import_path: str) -> collections.abc.Callable:
         m = self.CLASS_RE.match(import_path)

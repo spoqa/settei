@@ -143,11 +143,21 @@ class Impl(SampleInterface):
         self.args = args
         self.kwargs = kwargs
 
+    def __repr__(self) -> str:
+        args = ', '.join(repr(arg) for arg in self.args)
+        kwargs = ', '.join('{0}={1!r}'.format(k, v)
+                           for k, v in self.kwargs.items())
+        if kwargs:
+            args += (', ' if args else '') + kwargs
+        return '{0.__module__}.{0.__name__}({1})'.format(type(self), args)
+
 
 class TestAppConfigObject(Configuration):
     no_default = config_object_property('sample.a', SampleInterface)
     with_default = config_object_property('sample.b', SampleInterface,
                                           default=Impl('default'))
+    recursive = config_object_property('sample.c', SampleInterface,
+                                       recurse=True)
 
 
 def test_config_object_property():
@@ -157,12 +167,65 @@ def test_config_object_property():
             '*': ['a', 'b', 'c'],
             'd': 4,
             'e': 5,
+            'f': {
+                'class': __name__ + ':Impl',
+                'nested': True,
+                'recursive': {
+                    'class': __name__ + ':Impl',
+                    'nested': True,
+                }
+            },
         },
     })
     v = c.no_default
     assert isinstance(v, Impl)
     assert v.args == ('a', 'b', 'c')
-    assert v.kwargs == {'d': 4, 'e': 5}
+    assert v.kwargs == {
+        'd': 4, 'e': 5,
+        'f': {
+            'class': __name__ + ':Impl',
+            'nested': True,
+            'recursive': {
+                'class': __name__ + ':Impl',
+                'nested': True,
+            }
+        },
+    }
+
+
+def test_config_object_property_recurse():
+    c = TestAppConfigObject(sample={
+        'a': {'class': __name__ + ':Impl'},
+        'c': {
+            'class': __name__ + ':Impl',
+            '*': ['a', 'b', 'c'],
+            'd': 4,
+            'e': 5,
+            'f': {
+                'class': __name__ + ':Impl',
+                'nested': True,
+                'recursive': {
+                    'class': __name__ + ':Impl',
+                    'nested': True,
+                }
+            },
+        },
+    })
+    v = c.recursive
+    assert isinstance(v, Impl)
+    assert v.args == ('a', 'b', 'c')
+    assert frozenset(v.kwargs) == frozenset({'d', 'e', 'f'})
+    assert v.kwargs['d'] == 4
+    assert v.kwargs['e'] == 5
+    f = v.kwargs['f']
+    assert isinstance(f, Impl)
+    assert f.args == ()
+    assert frozenset(f.kwargs) == frozenset({'nested', 'recursive'})
+    assert f.kwargs['nested'] is True
+    r = f.kwargs['recursive']
+    assert isinstance(r, Impl)
+    assert r.args == ()
+    assert r.kwargs == {'nested': True}
 
 
 def test_config_object_property_not_dict_error():
