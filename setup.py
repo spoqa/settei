@@ -21,7 +21,7 @@ all_extra_requires = [
     for package in packages
 ]
 tests_require = [
-    'pytest >= 2.7.0',
+    'pytest >= 3.6.3, < 4.0.0',
 ] + all_extra_requires
 docs_require = [
     'Sphinx >= 1.4',
