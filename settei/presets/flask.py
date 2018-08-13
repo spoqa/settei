@@ -41,7 +41,7 @@ class WebConfiguration(LoggingConfiguration):
         return ImmutableDict((k.upper(), v) for k, v in web_config.items())
 
     @typechecked
-    def on_web_loaded(self, app: typing.Callable):
+    def on_web_loaded(self, app: typing.Callable[..., typing.Any]):
         """Be invoked when a WSGI app is ready.
 
         :param app: a ready wsgi/flask app

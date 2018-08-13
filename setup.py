@@ -9,7 +9,7 @@ from setuptools import find_packages, setup
 install_requires = [
     'pytoml >= 0.1.10, < 0.2.0',
     'setuptools',
-    'typeguard >= 2.1.1',
+    'typeguard >= 2.2.1',
 ]
 extras_require = {
     'flask': ['Flask', 'Werkzeug'],

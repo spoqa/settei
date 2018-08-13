@@ -4,6 +4,7 @@ build/
 dist/
 *.egg-info/
 .cache/
+.pytest_cache/
 .tox/
 junit-*.xml
 docs/_build
