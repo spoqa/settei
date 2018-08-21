@@ -1,6 +1,17 @@
 Changlog
 ========
 
+Version 0.5.1
+-------------
+
+To be released.
+
+- Became to support Python 3.7.  [`#25`_, `#28`_]
+
+.. _#25: https://github.com/spoqa/settei/issues/25
+.. _#28: https://github.com/spoqa/settei/pull/28
+
+
 Version 0.5.0
 -------------
 

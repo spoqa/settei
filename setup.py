@@ -9,7 +9,7 @@ from setuptools import find_packages, setup
 install_requires = [
     'pytoml >= 0.1.10, < 0.2.0',
     'setuptools',
-    'typeguard >= 2.1.1',
+    'typeguard >= 2.2.1',
 ]
 extras_require = {
     'flask': ['Flask', 'Werkzeug'],
@@ -21,7 +21,7 @@ all_extra_requires = [
     for package in packages
 ]
 tests_require = [
-    'pytest >= 2.7.0',
+    'pytest >= 3.6.3, < 4.0.0',
 ] + all_extra_requires
 docs_require = [
     'Sphinx >= 1.4',

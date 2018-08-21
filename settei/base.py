@@ -36,10 +36,16 @@ if hasattr(typing, 'UnionMeta'):
         """
         if isinstance(type_, typing.UnionMeta):
             return type_.__union_params__
-else:
+elif hasattr(typing, '_Union'):
     # For older versions of typing
     def get_union_types(type_) -> bool:
         if type(type_) is typing._Union:
+            return type_.__args__
+else:
+    # For newer versions of typing (>= Python 3.7)
+    def get_union_types(type_) -> bool:
+        if getattr(type_, '__origin__', None) is typing.Union and \
+           hasattr(type_, '__args__'):
             return type_.__args__
 
 
