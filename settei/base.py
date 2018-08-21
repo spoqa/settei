@@ -42,7 +42,7 @@ elif hasattr(typing, '_Union'):
         if type(type_) is typing._Union:
             return type_.__args__
 else:
-    # For newer versioss of typing (>= Python 3.7)
+    # For newer versions of typing (>= Python 3.7)
     def get_union_types(type_) -> bool:
         if getattr(type_, '__origin__', None) is typing.Union and \
            hasattr(type_, '__args__'):
