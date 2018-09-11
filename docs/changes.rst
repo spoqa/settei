@@ -4,7 +4,7 @@ Changlog
 Version 0.5.1
 -------------
 
-To be released.
+Released on Sep 11, 2018.
 
 - Became to support Python 3.7.  [`#25`_, `#28`_]
 
