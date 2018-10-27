@@ -4,7 +4,9 @@
 .. versionadded:: 0.2.0
 
 """
+import collections
 import collections.abc
+import enum
 import functools
 import pathlib
 import re
@@ -124,6 +126,7 @@ class config_property:
             return self
         default, value = self.get_raw_value(obj)
         if not default:
+            value = self.convert_native_type(value)
             self.typecheck(value)
         return value
 
@@ -146,6 +149,46 @@ class config_property:
                     return True, default
                 raise ConfigKeyError(key)
         return False, value
+
+    def convert_native_type(self, value) -> object:
+        union_types = get_union_types(self.cls)
+        cls = self.cls if union_types is None else union_types
+        if isinstance(cls, type) and issubclass(cls, enum.Enum):
+            try:
+                return cls(str(value))
+            except ValueError:
+                raise ConfigTypeError(
+                    'Invalid value {0} in {1!r}. Candidates are: {2}'.format(
+                        value, cls, ', '.join(cls.__members__)
+                    )
+                )
+        elif isinstance(cls, collections.Iterable):
+            enums = filter(lambda i: issubclass(i, enum.Enum), cls)
+            non_enums = filter(lambda i: not issubclass(i, enum.Enum), cls)
+            candidates = []
+            for e in enums:
+                try:
+                    candidates.append(e(str(value)))
+                except ValueError:
+                    pass
+            if len(candidates) == 0:
+                if non_enums:
+                    return value
+                else:
+                    raise ConfigTypeError(
+                        'No matching value {0} for types: {1}'.format(
+                            value, ', '.join([repr(r) for r in enums])
+                        )
+                    )
+            elif len(candidates) == 1:
+                return candidates[0]
+            else:
+                raise ConfigTypeError(
+                    'Ambiguous enum type for value {0}: {1}'.format(
+                        value, ', '.join([repr(r) for r in candidates])
+                    )
+                )
+        return value
 
     def typecheck(self, value) -> None:
         union_types = get_union_types(self.cls)

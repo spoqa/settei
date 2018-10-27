@@ -1,3 +1,4 @@
+import enum
 import pathlib
 import typing  # noqa
 import warnings
@@ -8,6 +9,18 @@ from settei.base import (ConfigKeyError, ConfigTypeError,
                          Configuration, ConfigValueError, ConfigWarning,
                          config_object_property, config_property,
                          get_union_types)
+
+
+class Enum1(enum.Enum):
+    apple = 'apple'
+    banana = 'banana'
+    cherry = 'cherry'
+
+
+class Enum2(enum.Enum):
+    apple = 'apple'
+    bear = 'bear'
+    candy = 'candy'
 
 
 def test_get_union_types():
@@ -44,6 +57,11 @@ class TestConfig(dict):
     union = config_property('union', typing.Union[int, str])
 
 
+class EnumTestConfig(dict):
+    enum = config_property('enum', Enum1, default=Enum1.apple)
+    enum_union = config_property('enum_union', typing.Union[Enum1, Enum2])
+
+
 class TestAppConfig(Configuration):
     database_url = config_property(
         'database.url', str,
@@ -75,6 +93,20 @@ def test_config_property(union_value: typing.Union[int, str]):
         assert c.depth2_warn == 'val'
         assert len(w) == 0
     assert c.union == union_value
+
+
+def test_enum_config_property():
+    c1 = EnumTestConfig(enum='apple', enum_union='banana')
+    c2 = EnumTestConfig(enum='banana', enum_union='candy')
+    c3 = EnumTestConfig(enum='dragonfruit', enum_union='apple')
+    assert c1.enum == Enum1.apple
+    assert c2.enum == Enum1.banana
+    assert c1.enum_union == Enum1.banana
+    assert c2.enum_union == Enum2.candy
+    with raises(ConfigTypeError):
+        c3.enum
+    with raises(ConfigTypeError):
+        c3.enum_union
 
 
 def test_config_property_absence():
