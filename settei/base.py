@@ -150,12 +150,11 @@ class config_property:
                 raise ConfigKeyError(key)
         return False, value
 
-    def convert_native_type(self, value) -> object:
-        union_types = get_union_types(self.cls)
-        cls = self.cls if union_types is None else union_types
+    def convert_native_type(self, value) -> typing.Any:
+        cls = get_union_types(self.cls) or self.cls
         if isinstance(cls, type) and issubclass(cls, enum.Enum):
             try:
-                return cls(str(value))
+                return cls(value)
             except ValueError:
                 raise ConfigTypeError(
                     'Invalid value {0} in {1!r}. Candidates are: {2}'.format(
@@ -168,7 +167,7 @@ class config_property:
             candidates = []
             for e in enums:
                 try:
-                    candidates.append(e(str(value)))
+                    candidates.append(e(value))
                 except ValueError:
                     pass
             if len(candidates) == 0:
