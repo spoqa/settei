@@ -170,7 +170,7 @@ class config_property:
                     candidates.append(e(value))
                 except ValueError:
                     pass
-            if len(candidates) == 0:
+            if not candidates:
                 if non_enums:
                     return value
                 else:
