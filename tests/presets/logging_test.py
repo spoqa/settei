@@ -21,8 +21,8 @@ def has_handlers(logger: logging.Logger) -> bool:
     return False
 
 
-def test_configure_logging(prefix: str='settei.tests.',
-                           conf_cls: type=LoggingConfiguration):
+def test_configure_logging(prefix: str = 'settei.tests.',
+                           conf_cls: type = LoggingConfiguration):
     TestHandler.records = []
     a = logging.getLogger(prefix + 'a')
     b = logging.getLogger(prefix + 'b')

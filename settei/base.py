@@ -94,7 +94,7 @@ class config_property:
     """
 
     @typechecked
-    def __init__(self, key: str, cls, docstring: str=None, **kwargs) -> None:
+    def __init__(self, key: str, cls, docstring: str = None, **kwargs) -> None:
         self.key = key
         self.cls = cls
         self.__doc__ = docstring
@@ -121,7 +121,7 @@ class config_property:
             self.default_func = None
             self.default_warning = False
 
-    def __get__(self, obj, cls: typing.Optional[type]=None):
+    def __get__(self, obj, cls: typing.Optional[type] = None):
         if obj is None:
             return self
         default, value = self.get_raw_value(obj)
@@ -322,12 +322,12 @@ class config_object_property(config_property):
     )
 
     @typechecked
-    def __init__(self, key: str, cls, docstring: str=None, recurse: bool=False,
-                 **kwargs) -> None:
+    def __init__(self, key: str, cls, docstring: str = None,
+                 recurse: bool = False, **kwargs) -> None:
         super().__init__(key=key, cls=cls, docstring=docstring, **kwargs)
         self.recurse = recurse
 
-    def __get__(self, obj, cls: typing.Optional[type]=None):
+    def __get__(self, obj, cls: typing.Optional[type] = None):
         if obj is None:
             return self
         default, expression = self.get_raw_value(obj)
@@ -473,7 +473,7 @@ class Configuration(collections.abc.Mapping):
             return cls.from_file(f)
 
     @typechecked
-    def __init__(self, config: typing.Mapping[str, object]={}, **kwargs):
+    def __init__(self, config: typing.Mapping[str, object] = {}, **kwargs):
         self.config = dict(config, **kwargs)
 
     def __len__(self) -> int:

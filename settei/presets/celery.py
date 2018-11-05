@@ -62,8 +62,8 @@ class WorkerConfiguration(LoggingConfiguration):
     @cached_property
     def worker_schedule(self) -> typing.Mapping[str,
                                                 typing.Mapping[str, object]]:
-        """(:class:`typing.Mapping`\ [:class:`str`,
-        :class:`typing.Mapping`\ [:class:`str`, :class:`object`]])
+        """(:class:`typing.Mapping`\\ [:class:`str`,
+        :class:`typing.Mapping`\\ [:class:`str`, :class:`object`]])
         The schedule table for Celery Beat, scheduler for periodic tasks.
 
         There's some preprocessing before reading configuration.
@@ -162,7 +162,7 @@ class WorkerConfiguration(LoggingConfiguration):
 
     @cached_property
     def worker_config(self) -> typing.Mapping[str, object]:
-        """(:class:`typing.Mapping`\ [:class:`str`, :class:`object`])
+        """(:class:`typing.Mapping`\\ [:class:`str`, :class:`object`])
         The configuration maping for worker that will go to :attr:`Celery.conf
         <celery.Celery.conf>`.
 
