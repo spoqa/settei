@@ -6,6 +6,10 @@ Version 0.5.2
 
 To be released.
 
+- Enabled declaring :class:`enum.Enum` types in :class:`~settei.config_proprety`. [`#29`_]
+
+.. _#29: https://github.com/spoqa/settei/pull/29 
+
 
 Version 0.5.1
 -------------

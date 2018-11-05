@@ -1,3 +1,4 @@
+import enum
 import pathlib
 import typing  # noqa
 import warnings
@@ -8,6 +9,18 @@ from settei.base import (ConfigKeyError, ConfigTypeError,
                          Configuration, ConfigValueError, ConfigWarning,
                          config_object_property, config_property,
                          get_union_types)
+
+
+class Enum1(enum.Enum):
+    apple = 'apple'
+    banana = 'banana'
+    cherry = 'cherry'
+
+
+class Enum2(enum.Enum):
+    apple = 'apple'
+    bear = 'bear'
+    candy = 'candy'
 
 
 def test_get_union_types():
@@ -44,6 +57,11 @@ class TestConfig(dict):
     union = config_property('union', typing.Union[int, str])
 
 
+class EnumTestConfig(dict):
+    enum = config_property('enum', Enum1, default=Enum1.apple)
+    enum_union = config_property('enum_union', typing.Union[Enum1, Enum2, str])
+
+
 class TestAppConfig(Configuration):
     database_url = config_property(
         'database.url', str,
@@ -75,6 +93,24 @@ def test_config_property(union_value: typing.Union[int, str]):
         assert c.depth2_warn == 'val'
         assert len(w) == 0
     assert c.union == union_value
+
+
+def test_enum_config_property():
+    c1 = EnumTestConfig(enum='apple', enum_union='banana')
+    c2 = EnumTestConfig(enum='banana', enum_union='candy')
+    c3 = EnumTestConfig(enum='dragonfruit', enum_union='apple')
+    c4 = EnumTestConfig(enum='cherry', enum_union='foo')
+    assert c1.enum == Enum1.apple
+    assert c2.enum == Enum1.banana
+    assert c1.enum_union == Enum1.banana
+    assert c2.enum_union == Enum2.candy
+    with raises(ConfigTypeError) as ex:
+        c3.enum
+    assert ex.value.args[0] == 'Invalid value dragonfruit in <enum \'Enum1\'>. Candidates are: apple, banana, cherry'  # noqa
+    with raises(ConfigTypeError) as ex:
+        c3.enum_union
+    assert ex.value.args[0] == 'Ambiguous enum type for value apple: <Enum1.apple: \'apple\'>, <Enum2.apple: \'apple\'>'  # noqa
+    assert c4.enum_union == 'foo'
 
 
 def test_config_property_absence():
