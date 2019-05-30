@@ -231,6 +231,9 @@ class WorkerConfiguration(LoggingConfiguration):
         :param app: a ready celery app
         :type app: :class:`celery.Celery`
 
+        .. versionchanged:: 0.5.2
+           Hooks list added
+
         """
         self.configure_logging()
 

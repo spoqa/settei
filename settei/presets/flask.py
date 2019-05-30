@@ -108,6 +108,9 @@ class WebConfiguration(LoggingConfiguration):
         :param app: a ready wsgi/flask app
         :type app: :class:`flask.Flask`
 
+        .. versionchanged:: 0.5.2
+           Hooks list added
+
         """
         self.configure_logging()
 
