@@ -8,11 +8,14 @@ import re
 import typing
 import warnings
 
+from celery import Celery
 from celery.schedules import crontab
 from celery.utils.imports import symbol_by_name
 from kombu.utils import cached_property
+from typeguard import typechecked
 
 from ..base import ConfigWarning, config_property
+from ..utils import import_hook
 from .logging import LoggingConfiguration
 
 __all__ = 'SCHEDULE_EXPR_PATTERN', 'WorkerConfiguration',
@@ -179,14 +182,70 @@ class WorkerConfiguration(LoggingConfiguration):
         )
         return celery_config
 
-    def on_worker_loaded(self, app):
-        """Be invoked when a Celery app is ready.
+    @typechecked
+    def on_worker_loaded(self, app: Celery):
+        """Trigger the ``worker.on_loaded`` hooks.
+        You should invoke this function when the Celery app is ready
+        with the Celery app as argument.
+        You may want to use
+        :attr:`celery.loaders.base.BaseLoader.on_worker_init`
+
+        ``worker.on_loaded`` hook can be a Python code or list of module path.
+
+        When ``worker.on_loaded`` is a single string, it will be interpreted as
+        Python code.
+        The configuration and the Celery app is injected as ``self`` and
+        ``app`` each:
+
+        .. code-block:: toml
+
+           [worker]
+           on_loaded = \"""
+           print('Hello, world!')
+           print('self is configuration!: {}'.format(self))
+           print('app is celery app!: {}'.format(app))
+           \"""
+
+
+        When ``worker.on_loaded`` is a list of string, it will be interpreted
+        as module paths:
+
+        .. code-block:: toml
+
+           [worker]
+           on_loaded = [
+               "utils.hooks:sample_hook",
+               "src.main:print_hello_world",
+           ]
+
+        The hook must receive two arguments, :class:`Configuration` and
+        :class:`celery.Celery`:
+
+        .. code-block:: python
+
+           def sample_hook(conf: Configuration, app: Celery):
+               print('Hello, world!')
+               print('conf is configuration!: {}'.format(conf))
+               print('app is celery app!: {}'.format(app))
 
         :param app: a ready celery app
         :type app: :class:`celery.Celery`
 
         """
         self.configure_logging()
-        exec(self.config.get('worker', {}).get('on_loaded', ''),
-             None,
-             {'self': self, 'app': app})
+
+        on_loaded = self.config.get('worker', {}).get('on_loaded', [])
+
+        if isinstance(on_loaded, (list, tuple)):
+            for hook_path in on_loaded:
+                func = import_hook(hook_path)
+                func(self, app)
+        else:
+            exec(
+                on_loaded,
+                None,
+                {
+                    'self': self,
+                    'app': app
+                },
+            )
