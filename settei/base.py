@@ -161,7 +161,7 @@ class config_property:
                         value, cls, ', '.join(cls.__members__)
                     )
                 )
-        elif isinstance(cls, collections.Iterable):
+        elif isinstance(cls, collections.abc.Iterable):
             enums = filter(lambda i: issubclass(i, enum.Enum), cls)
             non_enums = filter(lambda i: not issubclass(i, enum.Enum), cls)
             candidates = []
