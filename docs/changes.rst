@@ -4,7 +4,7 @@ Changlog
 Version 0.5.2
 -------------
 
-To be released.
+Released on June 10, 2019.
 
 - Enabled declaring :class:`enum.Enum` types in :class:`~settei.config_proprety`. [`#29`_]
 - Add hooks list feature for :attr:`~settei.presets.flask.WebConfiguration.on_web_loaded` and
