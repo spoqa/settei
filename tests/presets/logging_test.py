@@ -29,7 +29,7 @@ def test_configure_logging(prefix: str = 'settei.tests.',
     c = logging.getLogger(prefix + 'c')
 
     def log():
-        for level in 'debug', 'info', 'warn', 'error':
+        for level in 'debug', 'info', 'warning', 'error':
             for v, l in [('a', a), ('b', b), ('c', c)]:
                 getattr(l, level)('%s %s', level, v)
     assert not has_handlers(a)
@@ -65,9 +65,9 @@ def test_configure_logging(prefix: str = 'settei.tests.',
     assert has_handlers(c)
     log()
     assert TestHandler.records == [
-        'warn a',
-        'warn b',
-        'warn c',
+        'warning a',
+        'warning b',
+        'warning c',
         'error a',
         'error b',
         'error c',

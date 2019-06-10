@@ -7,8 +7,11 @@ Version 0.5.2
 To be released.
 
 - Enabled declaring :class:`enum.Enum` types in :class:`~settei.config_proprety`. [`#29`_]
+- Add hooks list feature for :attr:`~settei.presets.flask.WebConfiguration.on_web_loaded` and
+  :attr:`~settei.presets.celery.WorkerConfiguration.on_worker_loaded`. [`#30`_]
 
-.. _#29: https://github.com/spoqa/settei/pull/29 
+.. _#29: https://github.com/spoqa/settei/pull/29
+.. _#30: https://github.com/spoqa/settei/pull/30
 
 
 Version 0.5.1

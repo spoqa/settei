@@ -1,3 +1,4 @@
+from flask import Flask
 from .logging_test import test_configure_logging as configure_test
 from settei.presets.flask import WebConfiguration
 
@@ -33,12 +34,29 @@ def test_web_config():
 def test_web_on_loaded():
     conf = WebConfiguration({
         'web': {
-            'on_loaded': "assert app(self) == 'ok'",
+            'on_loaded': "assert app.name == '{}'\n"
+                         "app.name = 'ok'".format(__name__),
         },
     })
-    log = []
-    conf.on_web_loaded(lambda self: log.append(self) or 'ok')
-    assert log == [conf]
+    app = Flask(__name__)
+    conf.on_web_loaded(app)
+    assert app.name == 'ok'
+
+
+def sample_hook(conf: WebConfiguration, app: Flask):
+    assert app.name == __name__
+    app.name = 'ok'
+
+
+def test_web_on_loaded_hooks_list():
+    conf = WebConfiguration({
+        'web': {
+            'on_loaded': [__name__ + ':' + sample_hook.__name__],
+        },
+    })
+    app = Flask(__name__)
+    conf.on_web_loaded(app)
+    assert app.name == 'ok'
 
 
 def test_configure_logging():

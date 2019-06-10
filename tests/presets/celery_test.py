@@ -1,5 +1,6 @@
 import datetime
 
+from celery import Celery
 from celery.schedules import crontab
 
 from .logging_test import test_configure_logging as configure_test
@@ -21,15 +22,32 @@ def test_worker_config():
             'redis://')
 
 
-def test_workeron_loaded():
+def test_worker_on_loaded():
     conf = WorkerConfiguration({
         'worker': {
-            'on_loaded': "assert app(self) == 'ok'",
+            'on_loaded': "assert app.main == '{}'\n"
+                         "app.main = 'ok'".format(__name__),
         },
     })
-    log = []
-    conf.on_worker_loaded(lambda self: log.append(self) or 'ok')
-    assert log == [conf]
+    app = Celery(__name__)
+    conf.on_worker_loaded(app)
+    assert app.main == 'ok'
+
+
+def sample_hook(conf: WorkerConfiguration, app: Celery):
+    assert app.main == __name__
+    app.main = 'ok'
+
+
+def test_worker_on_loaded_hooks_list():
+    conf = WorkerConfiguration({
+        'worker': {
+            'on_loaded': [__name__ + ':' + sample_hook.__name__],
+        },
+    })
+    app = Celery(__name__)
+    conf.on_worker_loaded(app)
+    assert app.main == 'ok'
 
 
 def test_configure_logging():
