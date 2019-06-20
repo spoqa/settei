@@ -59,5 +59,16 @@ def test_web_on_loaded_hooks_list():
     assert app.name == 'ok'
 
 
+def test_web_on_loaded_with_callable():
+    conf = WebConfiguration({
+        'web': {
+            'on_loaded': "assert app(self) == 'ok'",
+        },
+    })
+    log = []
+    conf.on_web_loaded(lambda self: log.append(self) or 'ok')
+    assert log == [conf]
+
+
 def test_configure_logging():
     configure_test('settei.webtest.', WebConfiguration)
