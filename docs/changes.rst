@@ -4,7 +4,7 @@ Changlog
 Version 0.5.3
 -------------
 
-To be released.
+Released on June 20, 2019.
 
 - Change the ``app`` argument type of :attr:`~settei.presets.flask.WebConfiguration.on_web_loaded`
   to :class:`typing.Callable` from :class:`flask.Flask`. [`#31`_]
