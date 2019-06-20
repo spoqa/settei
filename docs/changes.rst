@@ -6,6 +6,10 @@ Version 0.5.3
 
 To be released.
 
+- Change the ``app`` argument type of :attr:`~settei.presets.flask.WebConfiguration.on_web_loaded`
+  to :class:`typing.Callable` from :class:`flask.Flask`. [`#31`_]
+
+.. _#31: https://github.com/spoqa/settei/pull/31
 
 Version 0.5.2
 -------------

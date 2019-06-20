@@ -7,7 +7,6 @@
 import collections.abc
 import typing
 
-from flask import Flask
 from typeguard import typechecked
 from werkzeug.datastructures import ImmutableDict
 from werkzeug.utils import cached_property
@@ -61,7 +60,7 @@ class WebConfiguration(LoggingConfiguration):
         return ImmutableDict((k.upper(), v) for k, v in web_config.items())
 
     @typechecked
-    def on_web_loaded(self, app: Flask):
+    def on_web_loaded(self, app: typing.Callable[..., typing.Any]):
         """Trigger the ``web.on_loaded`` hooks.
         You should invoke this function when the WSGI app is ready
         with the WSGI app as argument.
@@ -106,10 +105,13 @@ class WebConfiguration(LoggingConfiguration):
                print('app is flask app!: {}'.format(app))
 
         :param app: a ready wsgi/flask app
-        :type app: :class:`flask.Flask`
+        :type app: :class:`flask.Flask`, :class:`typing.Callable`
 
         .. versionchanged:: 0.5.2
            Hooks list added
+
+        .. versionchanged:: 0.5.3
+           Change the ``app`` argument type to :class:`typing.Callable`
 
         """
         self.configure_logging()
