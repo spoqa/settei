@@ -97,12 +97,8 @@ class config_property:
     """
 
     @typechecked
-<<<<<<< HEAD
-    def __init__(self, key: str, cls, docstring: str=None, cached: bool=False,
-=======
     def __init__(self, key: str, cls, docstring: str = None,
                  *, cached: bool = False,
->>>>>>> 9729869... lint check - flake8
                  **kwargs) -> None:
         self.key = key
         self.cls = cls
@@ -143,8 +139,9 @@ class config_property:
     def __get__(self, obj, cls: typing.Optional[type] = None):
         if self.cached:
             cache_key = '  cache_{!s}'.format(self.key)
-            instance = getattr(obj, cache_key, None)
-            if instance is None:
+            try:
+                instance = getattr(obj, cache_key)
+            except AttributeError:
                 value = self.raw_value(obj)
                 setattr(obj, cache_key, value)
             else:

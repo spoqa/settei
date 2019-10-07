@@ -10,7 +10,7 @@ To be released.
 Version 0.5.4
 -------------
 
-Released on October 1, 2019.
+Released on October 11, 2019.
 
 - Add cached parameter to cache config value on its instance.
 

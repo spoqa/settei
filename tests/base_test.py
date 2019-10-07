@@ -55,7 +55,7 @@ class TestConfig(dict):
     depth2_warn = config_property('section.key', str,
                                   default=None, default_warning=True)
     union = config_property('union', typing.Union[int, str])
-    cached = config_property('cached', bool)
+    cached = config_property('cached', dict)
 
 
 class EnumTestConfig(dict):
@@ -170,7 +170,6 @@ def test_config_property_type_error():
 
 
 class SampleInterface:
-
     pass
 
 
@@ -195,6 +194,7 @@ class TestAppConfigObject(Configuration):
                                           default=Impl('default'))
     recursive = config_object_property('sample.c', SampleInterface,
                                        recurse=True)
+    cached = config_property('cached', dict)
 
 
 def test_config_object_property():
@@ -331,6 +331,28 @@ def test_app_from_path(tmpdir):
 
 
 def test_config_property_cached():
-    tc = TestConfig({'cached': True})
-    cached_id = id(tc.cached)
-    assert cached_id == id(tc.cached)
+    cache_key = 'cache_key'
+    tc = TestConfig(cached={'true'})
+    assert tc['cached'] == {'true'}
+    try:
+        instance = getattr(tc, cache_key)
+    except AttributeError:
+        value = '123'
+        setattr(tc, cache_key, value)
+    else:
+        value = instance
+    assert value == '123'
+
+
+def test_config_object_property_cached():
+    cache_key = 'cache_key'
+    tco = TestAppConfigObject(cached={'true'})
+    assert tco['cached'] == {'true'}
+    try:
+        instance = getattr(tco, cache_key)
+    except AttributeError:
+        value = '123'
+        setattr(tco, cache_key, value)
+    else:
+        value = instance
+    assert value == '123'
