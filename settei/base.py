@@ -21,6 +21,7 @@ __all__ = ('ConfigError', 'ConfigKeyError', 'ConfigTypeError',
            'Configuration', 'ConfigValueError', 'ConfigWarning',
            'config_object_property', 'config_property', 'get_union_types')
 
+
 if hasattr(typing, 'UnionMeta'):
     def get_union_types(type_) -> bool:
         """Return a :class:`tuple` of the given :class:`~typing.Union`
@@ -98,7 +99,7 @@ class config_property:
 
     @typechecked
     def __init__(self, key: str, cls, docstring: str = None,
-                 *, cached: bool = False,
+                 *, cached: bool = False, default_warning: bool = False,
                  **kwargs) -> None:
         self.key = key
         self.cls = cls
@@ -111,14 +112,14 @@ class config_property:
             self.default_set = True
             self.default_value = True
             self.default_func = kwargs['default_func']
-            self.default_warning = kwargs.get('default_warning', False)
+            self.default_warning = default_warning
         elif 'default' in kwargs:
             default = kwargs['default']
             self.default_set = True
             self.default_value = False
             self.default_func = lambda _: default
-            self.default_warning = kwargs.get('default_warning', False)
-        elif 'default_warning' in kwargs:
+            self.default_warning = default_warning
+        elif default_warning:
             raise TypeError('default_warning is only available when default '
                             'value is provided')
         else:
@@ -127,27 +128,13 @@ class config_property:
             self.default_func = None
             self.default_warning = False
 
-    def raw_value(self, obj):
+    def __get__(self, obj, cls: typing.Optional[type] = None):
         if obj is None:
             return self
         default, value = self.get_raw_value(obj)
         if not default:
             value = self.convert_native_type(value)
             self.typecheck(value)
-        return value
-
-    def __get__(self, obj, cls: typing.Optional[type] = None):
-        if self.cached:
-            cache_key = '  cache_{!s}'.format(self.key)
-            try:
-                instance = getattr(obj, cache_key)
-            except AttributeError:
-                value = self.raw_value(obj)
-                setattr(obj, cache_key, value)
-            else:
-                value = instance
-        else:
-            value = self.raw_value(obj)
         return value
 
     def get_raw_value(self, obj) -> typing.Tuple[bool, object]:
@@ -347,10 +334,7 @@ class config_object_property(config_property):
         super().__init__(key=key, cls=cls, docstring=docstring, **kwargs)
         self.recurse = recurse
 
-    def __get__(self, obj, cls: typing.Optional[type] = None):
-        if obj is None:
-            return self
-        default, expression = self.get_raw_value(obj)
+    def default_check(self, default, expression, obj):
         if not default:
             if not isinstance(expression, collections.abc.Mapping):
                 raise ConfigTypeError(
@@ -364,7 +348,29 @@ class config_object_property(config_property):
                 )
             value = self.evaluate(expression)
             self.typecheck(value)
+            return value
+        value = self.get_raw_value(obj)
         return value
+
+    def cache_check(self, obj):
+        default, expression = self.get_raw_value(obj)
+        if self.cached:
+            cache_key = '  cache_{!s}'.format(self.key)
+            try:
+                instance = getattr(obj, cache_key)
+            except AttributeError:
+                value = self.default_check(default, expression, obj)
+                setattr(obj, cache_key, value)
+            else:
+                value = instance
+        else:
+            value = self.default_check(default, expression, obj)
+        return value
+
+    def __get__(self, obj, cls: typing.Optional[type] = None):
+        if obj is None:
+            return self
+        return self.cache_check(obj)
 
     def evaluate(self, expression) -> object:
         if not isinstance(expression, collections.abc.Mapping):

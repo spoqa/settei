@@ -1,20 +1,12 @@
 Changlog
 ========
 
-Version 0.5.5
+Version 0.5.4
 -------------
 
 To be released.
 
-
-Version 0.5.4
--------------
-
-Released on October 11, 2019.
-
-- Add cached parameter to cache config value on its instance.
-
-- Add ``cache`` parameter to :class:`~settei.base`.
+- Add ``cache`` option to :class:`~settei.base.config_object_property`.
 
 .. _#27: https://github.com/spoqa/settei/pull/27
 .. _#32: https://github.com/spoqa/settei/pull/32
