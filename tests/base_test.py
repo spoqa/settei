@@ -169,7 +169,6 @@ def test_config_property_type_error():
 
 
 class SampleInterface:
-
     pass
 
 
@@ -194,6 +193,7 @@ class TestAppConfigObject(Configuration):
                                           default=Impl('default'))
     recursive = config_object_property('sample.c', SampleInterface,
                                        recurse=True)
+    cached = config_object_property('sample.a', SampleInterface, cached=True)
 
 
 def test_config_object_property():
@@ -227,6 +227,7 @@ def test_config_object_property():
             }
         },
     }
+    assert c.no_default is not c.no_default
 
 
 def test_config_object_property_recurse():
@@ -327,3 +328,10 @@ def test_app_from_path(tmpdir):
     ''')
     cfg = TestAppConfig.from_path(pathlib.Path(path.strpath))
     assert cfg.database_url == 'sqlite:///b.db'
+
+
+def test_config_object_property_cached():
+    c = TestAppConfigObject(sample={
+        'a': {'class': __name__ + ':Impl'},
+    })
+    assert c.cached is c.cached

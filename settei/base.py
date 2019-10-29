@@ -47,7 +47,7 @@ else:
     # For newer versions of typing (>= Python 3.7)
     def get_union_types(type_) -> bool:
         if getattr(type_, '__origin__', None) is typing.Union and \
-           hasattr(type_, '__args__'):
+                hasattr(type_, '__args__'):
             return type_.__args__
 
 
@@ -79,6 +79,10 @@ class config_property:
                             this option is only available when ``default``
                             value is provided
     :type default_warning: :class:`bool`
+    :type cached: :class:`bool`
+    :param cached: keyword only argument.
+                   get config value which is cached on its instance so that
+                   config value won't be created again.
 
     .. versionchanged:: 0.4.0
 
@@ -94,9 +98,12 @@ class config_property:
     """
 
     @typechecked
-    def __init__(self, key: str, cls, docstring: str = None, **kwargs) -> None:
+    def __init__(self, key: str, cls, docstring: str = None,
+                 *, cached: bool = False, default_warning: bool = False,
+                 **kwargs) -> None:
         self.key = key
         self.cls = cls
+        self.cached = cached
         self.__doc__ = docstring
         if 'default_func' in kwargs:
             if 'default' in kwargs:
@@ -105,14 +112,14 @@ class config_property:
             self.default_set = True
             self.default_value = True
             self.default_func = kwargs['default_func']
-            self.default_warning = kwargs.get('default_warning', False)
+            self.default_warning = default_warning
         elif 'default' in kwargs:
             default = kwargs['default']
             self.default_set = True
             self.default_value = False
             self.default_func = lambda _: default
-            self.default_warning = kwargs.get('default_warning', False)
-        elif 'default_warning' in kwargs:
+            self.default_warning = default_warning
+        elif default_warning:
             raise TypeError('default_warning is only available when default '
                             'value is provided')
         else:
@@ -327,10 +334,7 @@ class config_object_property(config_property):
         super().__init__(key=key, cls=cls, docstring=docstring, **kwargs)
         self.recurse = recurse
 
-    def __get__(self, obj, cls: typing.Optional[type] = None):
-        if obj is None:
-            return self
-        default, expression = self.get_raw_value(obj)
+    def default_check(self, default, expression, obj):
         if not default:
             if not isinstance(expression, collections.abc.Mapping):
                 raise ConfigTypeError(
@@ -344,7 +348,29 @@ class config_object_property(config_property):
                 )
             value = self.evaluate(expression)
             self.typecheck(value)
+            return value
+        value = self.get_raw_value(obj)
         return value
+
+    def cache_check(self, obj):
+        default, expression = self.get_raw_value(obj)
+        if self.cached:
+            cache_key = '  cache_{!s}'.format(self.key)
+            try:
+                instance = getattr(obj, cache_key)
+            except AttributeError:
+                value = self.default_check(default, expression, obj)
+                setattr(obj, cache_key, value)
+            else:
+                value = instance
+        else:
+            value = self.default_check(default, expression, obj)
+        return value
+
+    def __get__(self, obj, cls: typing.Optional[type] = None):
+        if obj is None:
+            return self
+        return self.cache_check(obj)
 
     def evaluate(self, expression) -> object:
         if not isinstance(expression, collections.abc.Mapping):
@@ -356,7 +382,7 @@ class config_object_property(config_property):
         f = self.import_(import_path)
         args = expression.get('*', ())
         if isinstance(args, str) or \
-           not isinstance(args, collections.abc.Sequence):
+                not isinstance(args, collections.abc.Sequence):
             raise ConfigValueError(
                 '"*" field must be a list, not ' + repr(args)
             )

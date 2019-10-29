@@ -6,6 +6,10 @@ Version 0.5.4
 
 To be released.
 
+- Add ``cache`` option to :class:`~settei.base.config_object_property`.
+
+.. _#27: https://github.com/spoqa/settei/pull/27
+.. _#32: https://github.com/spoqa/settei/pull/32
 
 Version 0.5.3
 -------------
