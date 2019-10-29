@@ -4,7 +4,7 @@ Changlog
 Version 0.5.4
 -------------
 
-To be released.
+Released on October 29, 2019.
 
 - Add ``cache`` option to :class:`~settei.base.config_object_property`.
 
