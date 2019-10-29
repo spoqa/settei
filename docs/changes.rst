@@ -1,6 +1,12 @@
 Changlog
 ========
 
+Version 0.5.5
+-------------
+
+To be released.
+
+
 Version 0.5.4
 -------------
 
