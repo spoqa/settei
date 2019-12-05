@@ -337,43 +337,40 @@ class config_object_property(config_property):
         self.recurse = recurse
         self.cached = cached
 
-    def default_check(self, default, expression, obj):
-        if not default:
-            if not isinstance(expression, collections.abc.Mapping):
-                raise ConfigTypeError(
-                    '{0!r} field must be a mapping, not {1}'.format(
-                        self.key, typing._type_repr(type(expression))
-                    )
-                )
-            elif 'class' not in expression:
-                raise ConfigValueError(
-                    '{0!r} field lacks "class" field'.format(self.key)
-                )
-            value = self.evaluate(expression)
-            self.typecheck(value)
-            return value
-        value = self.get_raw_value(obj)
-        return value
+    def __get__(self, obj, cls: typing.Optional[type] = None):
+        if obj is None:
+            return self
 
-    def cache_check(self, obj):
-        default, expression = self.get_raw_value(obj)
         if self.cached:
             cache_key = '  cache_{!s}'.format(self.key)
             try:
                 instance = getattr(obj, cache_key)
             except AttributeError:
-                value = self.default_check(default, expression, obj)
-                setattr(obj, cache_key, value)
+                pass
             else:
-                value = instance
-        else:
-            value = self.default_check(default, expression, obj)
-        return value
+                return instance
 
-    def __get__(self, obj, cls: typing.Optional[type] = None):
-        if obj is None:
-            return self
-        return self.cache_check(obj)
+        default, expression = self.get_raw_value(obj)
+        if default:
+            return expression
+
+        if not isinstance(expression, collections.abc.Mapping):
+            raise ConfigTypeError(
+                '{0!r} field must be a mapping, not {1}'.format(
+                    self.key, typing._type_repr(type(expression))
+                )
+            )
+        elif 'class' not in expression:
+            raise ConfigValueError(
+                '{0!r} field lacks "class" field'.format(self.key)
+            )
+        value = self.evaluate(expression)
+        self.typecheck(value)
+
+        if self.cached:
+            setattr(obj, cache_key, value)
+
+        return value
 
     def evaluate(self, expression) -> object:
         if not isinstance(expression, collections.abc.Mapping):
