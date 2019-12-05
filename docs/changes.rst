@@ -4,9 +4,9 @@ Changelog
 Version 0.5.5
 -------------
 
-- Fix ``default`` option of :class:`~settei.base.config_object_property`. [`#34`_]
+Released on December 5, 2019.
 
-To be released.
+- Fix ``default`` option of :class:`~settei.base.config_object_property`. [`#34`_]
 
 .. _#34: https://github.com/spoqa/settei/pull/34
 
