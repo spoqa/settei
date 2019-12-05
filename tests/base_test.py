@@ -194,6 +194,9 @@ class TestAppConfigObject(Configuration):
     recursive = config_object_property('sample.c', SampleInterface,
                                        recurse=True)
     cached = config_object_property('sample.a', SampleInterface, cached=True)
+    cached_with_default = config_object_property('sample.b', SampleInterface,
+                                                 default=Impl('default'),
+                                                 cached=True)
 
 
 def test_config_object_property():
@@ -228,6 +231,10 @@ def test_config_object_property():
         },
     }
     assert c.no_default is not c.no_default
+    vv = c.with_default
+    assert isinstance(vv, Impl)
+    assert vv.args == ('default',)
+    assert vv.kwargs == {}
 
 
 def test_config_object_property_recurse():
@@ -332,6 +339,17 @@ def test_app_from_path(tmpdir):
 
 def test_config_object_property_cached():
     c = TestAppConfigObject(sample={
-        'a': {'class': __name__ + ':Impl'},
+        'a': {
+            'class': __name__ + ':Impl',
+            '*': ['a', 'b', 'c'],
+            'd': 4,
+            'e': 5,
+        },
     })
     assert c.cached is c.cached
+    assert isinstance(c.cached, Impl)
+    assert c.cached.args == ('a', 'b', 'c')
+    assert c.cached.kwargs == {'d': 4, 'e': 5}
+    assert isinstance(c.cached_with_default, Impl)
+    assert c.cached_with_default.args == ('default',)
+    assert c.cached_with_default.kwargs == {}
