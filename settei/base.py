@@ -79,10 +79,6 @@ class config_property:
                             this option is only available when ``default``
                             value is provided
     :type default_warning: :class:`bool`
-    :type cached: :class:`bool`
-    :param cached: keyword only argument.
-                   get config value which is cached on its instance so that
-                   config value won't be created again.
 
     .. versionchanged:: 0.4.0
 
@@ -99,11 +95,9 @@ class config_property:
 
     @typechecked
     def __init__(self, key: str, cls, docstring: str = None,
-                 *, cached: bool = False, default_warning: bool = False,
-                 **kwargs) -> None:
+                 *, default_warning: bool = False, **kwargs) -> None:
         self.key = key
         self.cls = cls
-        self.cached = cached
         self.__doc__ = docstring
         if 'default_func' in kwargs:
             if 'default' in kwargs:
@@ -314,11 +308,18 @@ class config_object_property(config_property):
                             this option is only available when ``default``
                             value is provided
     :type default_warning: :class:`bool`
+    :type cached: :class:`bool`
+    :param cached: keyword only argument.
+                   get config value which is cached on its instance so that
+                   config value won't be created again.
 
     .. versionadded:: 0.4.0
 
     .. versionadded:: 0.5.0
        The ``recurse`` option.
+
+    .. versionadded:: 0.5.5
+       The ``cached`` option.
 
     """
 
@@ -330,47 +331,46 @@ class config_object_property(config_property):
 
     @typechecked
     def __init__(self, key: str, cls, docstring: str = None,
-                 recurse: bool = False, **kwargs) -> None:
+                 recurse: bool = False, *, cached: bool = False,
+                 **kwargs) -> None:
         super().__init__(key=key, cls=cls, docstring=docstring, **kwargs)
         self.recurse = recurse
+        self.cached = cached
 
-    def default_check(self, default, expression, obj):
-        if not default:
-            if not isinstance(expression, collections.abc.Mapping):
-                raise ConfigTypeError(
-                    '{0!r} field must be a mapping, not {1}'.format(
-                        self.key, typing._type_repr(type(expression))
-                    )
-                )
-            elif 'class' not in expression:
-                raise ConfigValueError(
-                    '{0!r} field lacks "class" field'.format(self.key)
-                )
-            value = self.evaluate(expression)
-            self.typecheck(value)
-            return value
-        value = self.get_raw_value(obj)
-        return value
+    def __get__(self, obj, cls: typing.Optional[type] = None):
+        if obj is None:
+            return self
 
-    def cache_check(self, obj):
-        default, expression = self.get_raw_value(obj)
         if self.cached:
             cache_key = '  cache_{!s}'.format(self.key)
             try:
                 instance = getattr(obj, cache_key)
             except AttributeError:
-                value = self.default_check(default, expression, obj)
-                setattr(obj, cache_key, value)
+                pass
             else:
-                value = instance
-        else:
-            value = self.default_check(default, expression, obj)
-        return value
+                return instance
 
-    def __get__(self, obj, cls: typing.Optional[type] = None):
-        if obj is None:
-            return self
-        return self.cache_check(obj)
+        default, expression = self.get_raw_value(obj)
+        if default:
+            return expression
+
+        if not isinstance(expression, collections.abc.Mapping):
+            raise ConfigTypeError(
+                '{0!r} field must be a mapping, not {1}'.format(
+                    self.key, typing._type_repr(type(expression))
+                )
+            )
+        elif 'class' not in expression:
+            raise ConfigValueError(
+                '{0!r} field lacks "class" field'.format(self.key)
+            )
+        value = self.evaluate(expression)
+        self.typecheck(value)
+
+        if self.cached:
+            setattr(obj, cache_key, value)
+
+        return value
 
     def evaluate(self, expression) -> object:
         if not isinstance(expression, collections.abc.Mapping):
