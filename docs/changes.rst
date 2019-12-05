@@ -4,8 +4,11 @@ Changelog
 Version 0.5.5
 -------------
 
+- Fix ``default`` option of :class:`~settei.base.config_object_property`. [`#34`_]
+
 To be released.
 
+.. _#34: https://github.com/spoqa/settei/pull/34
 
 Version 0.5.4
 -------------
