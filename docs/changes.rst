@@ -6,6 +6,10 @@ Version 0.5.6
 
 To be released.
 
+- Added ``lookup_env`` option to :class:`~settei.base.config_property`.
+  It gives you the way to read OS environment variable on settei. [`#35`_]
+
+.. _#35: https://github.com/spoqa/settei/pull/35
 
 Version 0.5.5
 -------------
