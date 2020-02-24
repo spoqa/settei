@@ -1,4 +1,5 @@
 import enum
+import os
 import pathlib
 import typing  # noqa
 import warnings
@@ -353,3 +354,43 @@ def test_config_object_property_cached():
     assert isinstance(c.cached_with_default, Impl)
     assert c.cached_with_default.args == ('default',)
     assert c.cached_with_default.kwargs == {}
+
+
+class TestEnvAppConfig(dict):
+
+    env_lookup = config_property('foo.bar', str, lookup_env=True)
+    env_with_name = config_property('foo.baz', str, lookup_env=True,
+                                    env_name='LOREM_IPSUM')
+    env_false = config_property('foo.qux', str, lookup_env=False)
+    env_error = config_property('foo.quux', str, lookup_env=True)
+    given_first = config_property('foo.quuz', str, lookup_env=True)
+    parse = config_property('foo.parse', bool,
+                            lookup_env=True, parse_env=lambda x: x == 'True')
+
+
+def test_config_object_property_lookup_env():
+    os.environ['FOO_BAR'] = 'hi'
+    os.environ['LOREM_IPSUM'] = 'gg'
+    os.environ['FOO_QUX'] = 'qux'
+    os.environ['FOO_QUUZ'] = 'quuz'
+    c = TestEnvAppConfig(foo={'quuz': 'gl'})
+    assert c.env_lookup == 'hi', \
+        'Get env var when given configuration is missing.'
+    assert c.env_with_name == 'gg', \
+        'Get env var which one has diffrent name.'
+    assert c.given_first == 'gl', \
+        'Get given configuration even if env var is exist.'
+    # no look up env, no configration = Error
+    with raises(ConfigKeyError):
+        c.env_false
+    # no env, no configration = Error
+    with raises(ConfigKeyError):
+        c.env_error
+
+
+def test_config_object_property_convert_func():
+    os.environ['FOO_PARSE'] = 'True'
+    c = TestEnvAppConfig(foo={})
+    assert c.parse
+    os.environ['FOO_PARSE'] = 'False'
+    assert not c.parse

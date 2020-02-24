@@ -8,6 +8,7 @@ import collections
 import collections.abc
 import enum
 import functools
+import os
 import pathlib
 import re
 import textwrap
@@ -79,6 +80,20 @@ class config_property:
                             this option is only available when ``default``
                             value is provided
     :type default_warning: :class:`bool`
+    :param lookup_env: whether to look up a value in environment variable
+                       when the configuration value is not given.
+    :type lookup_env: :class:`bool`
+    :param env_name: A name of an environment variable of configuration.
+                     as a default, it looks up a value by using :param key:.
+                     for example ``abc.def`` looks up the environment variable
+                     ``ABC_DEF``.
+    :type env_name: :class:`str`
+    :param parse_env: Since environment variable is string on Python, It needs
+                      to parse its value to use configuration.
+                      A function that takes an 1 positional argument should be
+                      given. for your convenience see :mod:`settei.parse_env`
+                      as well.
+    :type parse_env: :class:`collections.abc.Callable`
 
     .. versionchanged:: 0.4.0
 
@@ -91,14 +106,28 @@ class config_property:
        it expects, but since 0.4.0 it became to raise :exc:`ConfigTypeError`
        instead. :exc:`ConfigTypeError` is also a subtype of :class:`TypeError`.
 
+    .. versionadded:: 0.5.6
+
+       Added ``lookup_env``, ``env_name``, ``parse_env`` parameters.
+       Now ``config_object_property`` became to read OS environment variable
+       as well. See more information at :param lookup_env:.
+
     """
 
     @typechecked
     def __init__(self, key: str, cls, docstring: str = None,
-                 *, default_warning: bool = False, **kwargs) -> None:
+                 *,
+                 default_warning: bool = False,
+                 lookup_env: bool = True,
+                 env_name: typing.Optional[str] = None,
+                 parse_env: typing.Callable[[str, ], typing.Any] = None,
+                 **kwargs) -> None:
         self.key = key
         self.cls = cls
         self.__doc__ = docstring
+        self.lookup_env = lookup_env
+        self.env_name = env_name
+        self.parse_env = parse_env
         if 'default_func' in kwargs:
             if 'default' in kwargs:
                 raise TypeError('default_func and default are mutually '
@@ -131,25 +160,47 @@ class config_property:
             self.typecheck(value)
         return value
 
-    def get_raw_value(self, obj) -> typing.Tuple[bool, object]:
+    def _value_from_dict(self, obj):
         value = obj
         for key in self.key.split('.'):
             try:
                 value = value[key]
             except KeyError:
-                if self.default_set:
-                    default = self.default_func(obj)
-                    if self.default_warning:
-                        warnings.warn(
-                            "can't find {} configuration; use {}".format(
-                                self.key, default
-                            ),
-                            ConfigWarning,
-                            stacklevel=3
-                        )
-                    return True, default
-                raise ConfigKeyError(key)
-        return False, value
+                return False, None
+        return True, value
+
+    def get_raw_value(self, obj) -> typing.Tuple[bool, object]:
+        raw_value = None
+        found, value = self._value_from_dict(obj)
+        if found:
+            raw_value = False, value
+        if raw_value is None and self.lookup_env:
+            env_val = os.environ.get(
+                self.env_name or self.key.replace('.', '_').upper()
+            )
+            if env_val:
+                if self.parse_env:
+                    try:
+                        env_val = self.parse_env(env_val)
+                    except Exception as e:
+                        raise ConfigValueError(
+                            'having a trouble for parsing an environment var.'
+                        ) from e
+                raw_value = False, env_val
+        if raw_value is None and self.default_set:
+            default = self.default_func(obj)
+            if self.default_warning:
+                warnings.warn(
+                    "can't find {} configuration; use {}".format(
+                        self.key, default
+                    ),
+                    ConfigWarning,
+                    stacklevel=3
+                )
+            raw_value = True, default
+        if raw_value is None:
+            raise ConfigKeyError(self.key)
+        return raw_value
 
     def convert_native_type(self, value) -> typing.Any:
         cls = get_union_types(self.cls) or self.cls
@@ -333,7 +384,8 @@ class config_object_property(config_property):
     def __init__(self, key: str, cls, docstring: str = None,
                  recurse: bool = False, *, cached: bool = False,
                  **kwargs) -> None:
-        super().__init__(key=key, cls=cls, docstring=docstring, **kwargs)
+        super().__init__(key=key, cls=cls, docstring=docstring,
+                         lookup_env=False, **kwargs)
         self.recurse = recurse
         self.cached = cached
 
