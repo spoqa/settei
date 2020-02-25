@@ -4,7 +4,7 @@ Changelog
 Version 0.5.6
 -------------
 
-To be released.
+Released on February 25, 2020.
 
 - Added ``lookup_env`` option to :class:`~settei.base.config_property`.
   It gives you the way to read OS environment variable on settei. [`#35`_]
