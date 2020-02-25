@@ -3,7 +3,7 @@ import uuid
 from pytest import mark
 from typeguard import typechecked
 
-from settei.parse_env import parse_bool, parse_float, parse_uuid
+from settei.parse_env import parse_bool, parse_float, parse_int, parse_uuid
 
 
 @mark.parametrize('v, result', [
@@ -27,6 +27,10 @@ def test_parse_bool(v: str, result: bool):
 
 def test_parse_float():
     assert parse_float('3.14') == float(3.14)
+
+
+def test_parse_int():
+    assert parse_int('1') == 1
 
 
 def test_parse_uuid():

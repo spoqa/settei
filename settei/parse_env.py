@@ -8,7 +8,7 @@ import uuid
 
 from typeguard import typechecked
 
-__all__ = 'parse_bool', 'parse_float', 'parse_uuid'
+__all__ = 'parse_bool', 'parse_float', 'parse_int', 'parse_uuid'
 
 
 @typechecked
@@ -24,6 +24,8 @@ def parse_bool(v: str) -> bool:
 
     :param v: An environment variable to parse.
     :type v: :class:`str`
+    :return: A boolean type value
+    :rtype: :class:`bool`
 
     .. versionadded:: 0.5.6
 
@@ -37,6 +39,8 @@ def parse_float(v: str) -> float:
 
     :param v: An environment variable to parse.
     :type v: :class:`str`
+    :return: A float type value
+    :rtype: :class:`float`
 
     .. versionadded:: 0.5.6
 
@@ -45,11 +49,28 @@ def parse_float(v: str) -> float:
 
 
 @typechecked
+def parse_int(v: str) -> int:
+    """Parse int type.
+
+    :param v: An environment variable to parse.
+    :type v: :class:`str`
+    :return: A int type value
+    :rtype: :class:`int`
+
+    .. versionadded:: 0.5.6
+
+    """
+    return int(v)
+
+
+@typechecked
 def parse_uuid(v: str) -> uuid.UUID:
     """Parse UUID type.
 
     :param v: An environment variable to parse.
     :type v: :class:`str`
+    :return: A UUID type value
+    :rtype: :class:`uuid.UUID`
 
     .. versionadded:: 0.5.6
 
