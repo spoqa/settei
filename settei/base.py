@@ -178,7 +178,7 @@ class config_property:
             env_val = os.environ.get(
                 self.env_name or self.key.replace('.', '_').upper()
             )
-            if env_val:
+            if env_val is not None:
                 if self.parse_env:
                     try:
                         env_val = self.parse_env(env_val)

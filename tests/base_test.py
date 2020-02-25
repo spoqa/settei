@@ -366,6 +366,7 @@ class TestEnvAppConfig(dict):
     given_first = config_property('foo.quuz', str, lookup_env=True)
     parse = config_property('foo.parse', bool,
                             lookup_env=True, parse_env=lambda x: x == 'True')
+    empty_text = config_property('foo.empty', str, lookup_env=True)
 
 
 def test_config_object_property_lookup_env():
@@ -373,6 +374,7 @@ def test_config_object_property_lookup_env():
     os.environ['LOREM_IPSUM'] = 'gg'
     os.environ['FOO_QUX'] = 'qux'
     os.environ['FOO_QUUZ'] = 'quuz'
+    os.environ['FOO_EMPTY'] = ''
     c = TestEnvAppConfig(foo={'quuz': 'gl'})
     assert c.env_lookup == 'hi', \
         'Get env var when given configuration is missing.'
@@ -386,6 +388,8 @@ def test_config_object_property_lookup_env():
     # no env, no configration = Error
     with raises(ConfigKeyError):
         c.env_error
+    # should allow empty text
+    assert c.empty_text == ''
 
 
 def test_config_object_property_convert_func():
