@@ -417,10 +417,9 @@ class config_object_property(config_property):
     :param lookup_env: whether to look up a value in environment variable
                        when the configuration value is not given.
     :type lookup_env: :class:`bool`
-    :param env_name: A name of an environment variable of configuration.
-                     as a default, it looks up a value by using :param key:.
-                     for example ``abc`` looks up the environment variable
-                     starts with ``ABC__``.
+    :param parse: Since environment variable is string on Python, It needs
+                  to parse its value to use configuration.
+    :type parse: :class:`collections.abc.Callable`
 
     .. versionadded:: 0.4.0
 
@@ -432,7 +431,7 @@ class config_object_property(config_property):
 
     .. versionadded:: 0.6.0
 
-       Added ``lookup_env``, ``env_name``, ``parse_env`` parameters.
+       Added ``lookup_env``, ``parse`` parameters.
        Now ``config_object_property`` became to read OS environment variable
        as well. See more information at :param lookup_env:.
 
@@ -448,11 +447,11 @@ class config_object_property(config_property):
     def __init__(self, key: str, cls, docstring: str = None,
                  recurse: bool = False, *, cached: bool = False,
                  lookup_env: bool = True,
-                 env_names: typing.Optional[typing.Mapping[str, str]] = None,
                  parse: ParseFunctionType = None,
                  **kwargs) -> None:
         super().__init__(key=key, cls=cls, docstring=docstring,
                          lookup_env=lookup_env, **kwargs)
+        self.parse = parse
         self.recurse = recurse
         self.cached = cached
 
@@ -524,6 +523,13 @@ class config_object_property(config_property):
             r = e
             for k in self.key.split('.'):
                 r = r[k]
+            if self.parse:
+                try:
+                    r = self.parse(r)
+                except Exception as e:
+                    raise ConfigValueError(
+                        'having a trouble for parsing an environment var.'
+                    ) from e
             return r
         else:
             return None

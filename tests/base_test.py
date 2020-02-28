@@ -356,6 +356,14 @@ def test_config_object_property_cached():
     assert c.cached_with_default.kwargs == {}
 
 
+def parse_foo(d: typing.Mapping[str, str]):
+    return {
+        **d,
+        '*': [int(x) for x in d['*'][0]],
+        'foo': float(d['foo']),
+    }
+
+
 class TestEnvAppConfig(dict):
 
     env_lookup = config_property('foo.bar', str, lookup_env=True)
@@ -371,7 +379,11 @@ class TestEnvAppConfig(dict):
     recursiveobj = config_object_property('foo.recurse', SampleInterface,
                                           recurse=True)
 
-    # recursive = config_object_property('foo.DD_DD', SampleInterface)
+    parse_object = config_object_property(
+        'foo.parse',
+        SampleInterface,
+        parse=parse_foo
+    )
 
 
 def test_config_property_lookup_env():
@@ -440,3 +452,12 @@ def test_config_object_property_env_recurse():
     assert isinstance(r, Impl)
     assert r.args == ('hi', 'mi', 'me')
     assert r.kwargs == {'nested': 'true'}
+
+
+def test_config_object_property_env_parse():
+    os.environ['FOO__PARSE__CLASS'] = __name__ + ':Impl'
+    os.environ['FOO__PARSE__*__0'] = '1'
+    os.environ['FOO__PARSE__FOO'] = '3.14'
+    c = TestEnvAppConfig(foo={})
+    assert c.parse_object.args == (1, )
+    assert c.parse_object.kwargs == {'foo': 3.14}
