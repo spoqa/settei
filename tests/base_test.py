@@ -357,11 +357,12 @@ def test_config_object_property_cached():
 
 
 def parse_foo(d: typing.Mapping[str, str]):
-    return {
-        **d,
+    r = d.copy()
+    r.update({
         '*': [int(x) for x in d['*'][0]],
         'foo': float(d['foo']),
-    }
+    })
+    return r
 
 
 class TestEnvAppConfig(dict):
