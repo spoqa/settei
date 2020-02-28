@@ -8,6 +8,8 @@ To be released.
 
 - Removed ``env_name`` paramter from
   :class:`~settei.base.config_object_property`.
+- Changed asterisk charater into ``ASTERISK``. We couldn't use special
+  charaters in OS environment variable name.
 
 Version 0.6.0
 -------------
