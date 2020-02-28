@@ -10,6 +10,7 @@ To be released.
   :class:`~settei.base.config_object_property`.
 - Changed asterisk charater into ``ASTERISK``. We couldn't use special
   charaters in OS environment variable name.
+- Support list in environment variable.
 
 Version 0.6.0
 -------------

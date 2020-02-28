@@ -120,10 +120,32 @@ class config_property:
        Now ``abc.def`` looks up the environment variable
        ``ABC__DEF`` instead of ``ABC_DEF``.
 
+    .. versionadded:: 0.7.0
+
+       Support list syntax in environment variable.
+
+       .. code-block:: bash
+
+          A__FOO__SETTEIENVLIST__0 = '0'
+          A__FOO__SETTEIENVLIST__0 = '1'
+
+       .. code-block:: toml
+
+          [a]
+          foo = ['0', '1']
+
+      Both toml and bash script make same result with the following
+      Python code::
+
+          class A(Configuration):
+
+              l = config_property('a.foo', list)
+
     """
 
     delimiter = '__'
     ASTERISK_CHAR = 'ASTERISK'
+    LIST_CHAR = 'SETTEIENVLIST'
 
     @typechecked
     def __init__(self, key: str, cls, docstring: str = None,
@@ -222,22 +244,30 @@ class config_property:
                 self.ASTERISK_CHAR in zip_keys and
                 zip_keys.index(self.ASTERISK_CHAR)
             )
+            list_index = (
+                self.LIST_CHAR in zip_keys and
+                zip_keys.index(self.LIST_CHAR)
+            )
             for i, key in enumerate(zip_keys):
                 k = key.lower() if key != self.ASTERISK_CHAR else '*'
                 env_name = self.delimiter.join(zip_keys[:i + 1])
                 if env_name in env:
                     input_ = env[env_name]
-                elif asterisk_index and i == asterisk_index:
+                elif ((asterisk_index and i == asterisk_index) or
+                        (list_index and i == list_index - 1)):
                     input_ = []
                 else:
                     input_ = {}
-                if asterisk_index and i > asterisk_index:
+                if ((asterisk_index and i > asterisk_index) or
+                        (list_index and i > list_index)):
                     int_key = int(key)
                     diff = len(z) - (int_key + 1)
                     if diff < 0:
                         z += [None] * abs(diff)
                     z[int_key] = input_
                 else:
+                    if list_index and i == list_index:
+                        continue
                     z.setdefault(k, input_)
                     z = z[k]
         return rs

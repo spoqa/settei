@@ -376,6 +376,8 @@ def parse_foo(d: typing.Mapping[str, str]):
 
 class TestEnvAppConfig(dict):
 
+    env_list = config_property('foo.list', list, lookup_env=True)
+    env_dict = config_property('foo.dict', dict, lookup_env=True)
     env_lookup = config_property('foo.bar', str, lookup_env=True)
     env_false = config_property('foo.qux', str, lookup_env=False)
     env_error = config_property('foo.quux', str, lookup_env=True)
@@ -391,17 +393,24 @@ class TestEnvAppConfig(dict):
     parse_object = config_object_property(
         'foo.parse',
         SampleInterface,
-        parse_env=parse_foo
+        parse_env=parse_foo,
+        lookup_env=True
     )
 
 
 def test_config_property_lookup_env():
+    os.environ['FOO__DICT__FOO'] = 'foo'
+    os.environ['FOO__DICT__BAR'] = 'bar'
+    os.environ['FOO__LIST__SETTEIENVLIST__0'] = 'foo'
+    os.environ['FOO__LIST__SETTEIENVLIST__1'] = 'bar'
     os.environ['FOO__BAR'] = 'hi'
     os.environ['LOREM_IPSUM'] = 'gg'
     os.environ['FOO__QUX'] = 'qux'
     os.environ['FOO__QUUZ'] = 'quuz'
     os.environ['FOO__EMPTY'] = ''
     c = TestEnvAppConfig(foo={'quuz': 'gl'})
+    assert c.env_list == ['foo', 'bar']
+    assert c.env_dict == {'foo': 'foo', 'bar': 'bar'}
     assert c.env_lookup == 'hi', \
         'Get env var when given configuration is missing.'
     assert c.given_first == 'gl', \
