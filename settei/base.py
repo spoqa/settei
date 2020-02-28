@@ -383,6 +383,35 @@ class config_object_property(config_property):
        CACHE__*__1 = "6379"
        CACHE__DB = "0"
 
+    You may want to parse an environment variable into appropriate
+    Python types. Give a function that takes one dict and return a new dict.
+
+    In the above example, it is good to be that if the port number and
+    db number are integer.
+
+    .. code-block:: python
+
+       def parse_cache(d: typing.Mapping) -> typing.Mapping:
+           return {
+               **d,
+               '*': [d['*'][0], int(d['*'][1])],
+               'db': int(d['db']),
+           }
+
+       class App(Configuration):
+           cache = config_object_property('cache', BaseCache, lookup_env=True,
+                                          parse=parse_cache)
+
+    .. note::
+
+       dict destructing onnly support in Python 3.5+. You need to
+       ``dict.copy()`` and ``dict.upate()`` in Python 3.4.
+
+       ```
+       result = d.copy()
+       result.update({'foo': ...})
+       ```
+
     :param key: the dotted string of key path.  for example ``abc.def`` looks
                 up ``config['abc']['def']``
     :type key: :class:`str`
@@ -447,7 +476,7 @@ class config_object_property(config_property):
     def __init__(self, key: str, cls, docstring: str = None,
                  recurse: bool = False, *, cached: bool = False,
                  lookup_env: bool = True,
-                 parse: ParseFunctionType = None,
+                 parse: typing.Optional[ParseFunctionType] = None,
                  **kwargs) -> None:
         super().__init__(key=key, cls=cls, docstring=docstring,
                          lookup_env=lookup_env, **kwargs)
