@@ -4,7 +4,7 @@ Changelog
 Version 0.6.0
 -------------
 
-To be released.
+Released on February 28, 2020.
 
 - Added ``lookup_env`` option to :class:`~settei.base.config_object_property`.
   It giaves you the way to read OS environment variable like
