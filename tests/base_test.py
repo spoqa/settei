@@ -389,40 +389,43 @@ class TestEnvAppConfig(dict):
     env_object = config_object_property('foo.obj', SampleInterface)
     recursiveobj = config_object_property('foo.recurse', SampleInterface,
                                           recurse=True)
-
     parse_object = config_object_property(
         'foo.parse',
         SampleInterface,
         parse_env=parse_foo,
         lookup_env=True
     )
+    overlay_with_env = config_property(
+        'foo.overlay_env', dict, lookup_env=True
+    )
 
 
 def test_config_property_lookup_env():
-    os.environ['FOO__DICT__FOO'] = 'foo'
-    os.environ['FOO__DICT__BAR'] = 'bar'
-    os.environ['FOO__LIST__SETTEIENVLIST__0'] = 'foo'
-    os.environ['FOO__LIST__SETTEIENVLIST__1'] = 'bar'
-    os.environ['FOO__BAR'] = 'hi'
-    os.environ['LOREM_IPSUM'] = 'gg'
-    os.environ['FOO__QUX'] = 'qux'
-    os.environ['FOO__QUUZ'] = 'quuz'
-    os.environ['FOO__EMPTY'] = ''
-    c = TestEnvAppConfig(foo={'quuz': 'gl'})
-    assert c.env_list == ['foo', 'bar']
-    assert c.env_dict == {'foo': 'foo', 'bar': 'bar'}
-    assert c.env_lookup == 'hi', \
-        'Get env var when given configuration is missing.'
-    assert c.given_first == 'gl', \
-        'Get given configuration even if env var is exist.'
-    # no look up env, no configration = Error
-    with raises(ConfigKeyError):
-        c.env_false
-    # no env, no configration = Error
-    with raises(ConfigKeyError):
-        c.env_error
-    # should allow empty text
-    assert c.empty_text == ''
+    with os_environ({
+        'FOO__DICT__FOO': 'foo',
+        'FOO__DICT__BAR': 'bar',
+        'FOO__LIST__SETTEIENVLIST__0': 'foo',
+        'FOO__LIST__SETTEIENVLIST__1': 'bar',
+        'FOO__BAR': 'hi',
+        'FOO__QUX': 'qux',
+        'FOO__QUUZ': 'quuz',
+        'FOO__EMPTY': '',
+    }):
+        c = TestEnvAppConfig(foo={'quuz': 'gl'})
+        assert c.env_list == ['foo', 'bar']
+        assert c.env_dict == {'foo': 'foo', 'bar': 'bar'}
+        assert c.env_lookup == 'hi', \
+            'Get env var when given configuration is missing.'
+        assert c.given_first == 'gl', \
+            'Get given configuration even if env var is exist.'
+        # no look up env, no configration = Error
+        with raises(ConfigKeyError):
+            c.env_false
+        # no env, no configration = Error
+        with raises(ConfigKeyError):
+            c.env_error
+        # should allow empty text
+        assert c.empty_text == ''
 
 
 def test_config_property_convert_func():
@@ -488,3 +491,16 @@ def test_config_object_property_env_parse():
         c = TestEnvAppConfig(foo={})
         assert c.parse_object.args == (1, )
         assert c.parse_object.kwargs == {'foo': 3.14}
+
+
+def test_config_property_overlay_env():
+    with os_environ({'FOO__OVERLAY_ENV__FOO': '1'}):
+        c = TestEnvAppConfig(foo={'overlay_env': {'bar': '2'}})
+        assert c.overlay_with_env == {'foo': '1', 'bar': '2'}
+
+    with os_environ({
+        'FOO__OVERLAY_ENV__FOO': '1',
+        'FOO__OVERLAY_ENV__BAR': '2'
+    }):
+        c = TestEnvAppConfig(foo={'overlay_env': {'bar': '3'}})
+        assert c.overlay_with_env == {'foo': '1', 'bar': '3'}

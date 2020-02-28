@@ -11,6 +11,9 @@ To be released.
 - Changed asterisk charater into ``ASTERISK``. We couldn't use special
   charaters in OS environment variable name.
 - Support list in environment variable.
+- Allow configure value on both toml and environment variable at
+  the same time.  Firstly settei get a configuration from toml,
+  then scan an environment variable.
 
 Version 0.6.0
 -------------

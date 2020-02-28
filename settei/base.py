@@ -141,6 +141,12 @@ class config_property:
 
               l = config_property('a.foo', list)
 
+    .. versionadded:: 0.7.0
+
+       Allow configure value on both toml and environment variable at
+       the same time.  Firstly settei get a configuration from toml,
+       then scan an environment variable.
+
     """
 
     delimiter = '__'
@@ -297,14 +303,26 @@ class config_property:
             return None
 
     def get_raw_value(self, obj) -> typing.Tuple[bool, object]:
+        def dict_merge(dct, merge_dct):
+            dct = dct or {}
+            for k, v in merge_dct.items():
+                if k in dct and isinstance(dct[k], dict):
+                    dict_merge(dct[k], merge_dct[k])
+                else:
+                    dct[k] = merge_dct[k]
+            return dct
+
         raw_value = None
         found, value = self._value_from_dict(obj)
         if found:
             raw_value = False, value
-        if raw_value is None and self.lookup_env:
+        if self.lookup_env:
             env_val = self._value_from_env(obj)
             if env_val is not None:
-                raw_value = False, env_val
+                if raw_value and isinstance(value, dict):
+                    raw_value = False, dict_merge(env_val, value)
+                elif raw_value is None:
+                    raw_value = False, env_val
         if raw_value is None and self.default_set:
             default = self.default_func(obj)
             if self.default_warning:
