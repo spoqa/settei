@@ -6,6 +6,9 @@ Version 0.7.0
 
 To be released.
 
+- Removed ``env_name`` paramter from
+  :class:`~settei.base.config_object_property`.
+
 Version 0.6.0
 -------------
 

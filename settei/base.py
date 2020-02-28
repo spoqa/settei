@@ -84,11 +84,6 @@ class config_property:
     :param lookup_env: whether to look up a value in environment variable
                        when the configuration value is not given.
     :type lookup_env: :class:`bool`
-    :param env_name: A name of an environment variable of configuration.
-                     as a default, it looks up a value by using :param key:.
-                     for example ``abc.def`` looks up the environment variable
-                     ``ABC__DEF``.
-    :type env_name: :class:`str`
     :param parse_env: Since environment variable is string on Python, It needs
                       to parse its value to use configuration.
                       A function that takes an 1 positional argument should be
@@ -124,20 +119,19 @@ class config_property:
     """
 
     delimiter = '__'
+    ASTERISK_CHAR = 'ASTERISK'
 
     @typechecked
     def __init__(self, key: str, cls, docstring: str = None,
                  *,
                  default_warning: bool = False,
                  lookup_env: bool = True,
-                 env_name: typing.Optional[str] = None,
                  parse_env: typing.Callable[[str, ], typing.Any] = None,
                  **kwargs) -> None:
         self.key = key
         self.cls = cls
         self.__doc__ = docstring
         self.lookup_env = lookup_env
-        self.env_name = env_name
         self.parse_env = parse_env
         if 'default_func' in kwargs:
             if 'default' in kwargs:
@@ -184,9 +178,7 @@ class config_property:
         return k.replace('.', self.delimiter).upper()
 
     def _value_from_env(self, obj):
-        env_val = os.environ.get(
-            self.env_name or self._make_env_name(self.key)
-        )
+        env_val = os.environ.get(self._make_env_name(self.key))
         if env_val is None:
             return env_val
         if self.parse_env:

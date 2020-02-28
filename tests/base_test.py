@@ -368,8 +368,6 @@ def parse_foo(d: typing.Mapping[str, str]):
 class TestEnvAppConfig(dict):
 
     env_lookup = config_property('foo.bar', str, lookup_env=True)
-    env_with_name = config_property('foo.baz', str, lookup_env=True,
-                                    env_name='LOREM_IPSUM')
     env_false = config_property('foo.qux', str, lookup_env=False)
     env_error = config_property('foo.quux', str, lookup_env=True)
     given_first = config_property('foo.quuz', str, lookup_env=True)
@@ -396,8 +394,6 @@ def test_config_property_lookup_env():
     c = TestEnvAppConfig(foo={'quuz': 'gl'})
     assert c.env_lookup == 'hi', \
         'Get env var when given configuration is missing.'
-    assert c.env_with_name == 'gg', \
-        'Get env var which one has diffrent name.'
     assert c.given_first == 'gl', \
         'Get given configuration even if env var is exist.'
     # no look up env, no configration = Error
