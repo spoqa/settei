@@ -455,7 +455,9 @@ class config_object_property(config_property):
         self.recurse = recurse
         self.cached = cached
 
-    def _transform_env_to_dict(self, env):
+    def _transform_env_to_dict(
+        self, env: typing.Mapping[str, str]
+    ) -> typing.Mapping:
         """Transform environment variable into a configuration dict. It uses
         ``delimiter`` to decide the form of result.
 
