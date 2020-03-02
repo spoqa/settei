@@ -4,7 +4,7 @@ Changelog
 Version 0.7.0
 -------------
 
-To be released.
+Released on March 02, 2020.
 
 - Removed ``env_name`` paramter from
   :class:`~settei.base.config_object_property`.
