@@ -1,10 +1,19 @@
 Changelog
 =========
 
-Version 0.6.1
+Version 0.7.0
 -------------
 
 To be released.
+
+- Removed ``env_name`` paramter from
+  :class:`~settei.base.config_object_property`.
+- Changed asterisk charater into ``ASTERISK``. We couldn't use special
+  charaters in OS environment variable name.
+- Support list in environment variable.
+- Allow configure value on both toml and environment variable at
+  the same time.  Firstly settei get a configuration from toml,
+  then scan an environment variable.
 
 Version 0.6.0
 -------------

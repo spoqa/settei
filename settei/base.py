@@ -22,6 +22,10 @@ from typeguard import typechecked
 __all__ = ('ConfigError', 'ConfigKeyError', 'ConfigTypeError',
            'Configuration', 'ConfigValueError', 'ConfigWarning',
            'config_object_property', 'config_property', 'get_union_types')
+ParseFunctionType = typing.Union[
+    typing.Callable[[str, ], typing.Any],
+    typing.Callable[[typing.Mapping, ], typing.Mapping]
+]
 
 
 if hasattr(typing, 'UnionMeta'):
@@ -84,11 +88,6 @@ class config_property:
     :param lookup_env: whether to look up a value in environment variable
                        when the configuration value is not given.
     :type lookup_env: :class:`bool`
-    :param env_name: A name of an environment variable of configuration.
-                     as a default, it looks up a value by using :param key:.
-                     for example ``abc.def`` looks up the environment variable
-                     ``ABC__DEF``.
-    :type env_name: :class:`str`
     :param parse_env: Since environment variable is string on Python, It needs
                       to parse its value to use configuration.
                       A function that takes an 1 positional argument should be
@@ -121,23 +120,50 @@ class config_property:
        Now ``abc.def`` looks up the environment variable
        ``ABC__DEF`` instead of ``ABC_DEF``.
 
+    .. versionadded:: 0.7.0
+
+       Support list syntax in environment variable.
+
+       .. code-block:: bash
+
+          A__FOO__SETTEIENVLIST__0 = '0'
+          A__FOO__SETTEIENVLIST__0 = '1'
+
+       .. code-block:: toml
+
+          [a]
+          foo = ['0', '1']
+
+      Both toml and bash script make same result with the following
+      Python code::
+
+          class A(Configuration):
+
+              l = config_property('a.foo', list)
+
+    .. versionadded:: 0.7.0
+
+       Allow configure value on both toml and environment variable at
+       the same time.  Firstly settei get a configuration from toml,
+       then scan an environment variable.
+
     """
 
     delimiter = '__'
+    ASTERISK_CHAR = 'ASTERISK'
+    LIST_CHAR = 'SETTEIENVLIST'
 
     @typechecked
     def __init__(self, key: str, cls, docstring: str = None,
                  *,
                  default_warning: bool = False,
                  lookup_env: bool = True,
-                 env_name: typing.Optional[str] = None,
-                 parse_env: typing.Callable[[str, ], typing.Any] = None,
+                 parse_env: typing.Optional[ParseFunctionType] = None,
                  **kwargs) -> None:
         self.key = key
         self.cls = cls
         self.__doc__ = docstring
         self.lookup_env = lookup_env
-        self.env_name = env_name
         self.parse_env = parse_env
         if 'default_func' in kwargs:
             if 'default' in kwargs:
@@ -183,30 +209,120 @@ class config_property:
     def _make_env_name(self, k: str) -> str:
         return k.replace('.', self.delimiter).upper()
 
+    def _transform_env_to_dict(
+        self, env: typing.Mapping[str, str]
+    ) -> typing.Mapping:
+        """Transform environment variable into a configuration dict. It uses
+        ``delimiter`` to decide the form of result.
+
+        In the below example, shows us that how environment variable transform
+        into dict.
+
+        .. code-block::bash
+
+           CACHE__CLASS='cache:SimpleCache'
+           CACHE__ASTERISK__0='arg1'
+           CACHE__ASTERISK__1='arg2'
+           CACHE__CONNECTOR__CLASS='cache.connector:SimpleConnector'
+           CACHE__CONNECTOR__HOST='localhost'
+
+        .. code-block::python
+
+           {
+               'cache': {
+                   'class': 'cache:SimpleCache',
+                   '*': ('arg1', 'arg2'),
+                   'connector': {
+                       'class': 'cache.connector:SimpleConnector',
+                       'host': 'localhost',
+                   },
+               },
+           }
+
+        """
+        rs = {}
+        split_env_names = [
+            x.split(self.delimiter) for x in env.keys()
+        ]
+        for zip_keys, in itertools.zip_longest(split_env_names):
+            z = rs
+            asterisk_index = (
+                self.ASTERISK_CHAR in zip_keys and
+                zip_keys.index(self.ASTERISK_CHAR)
+            )
+            list_index = (
+                self.LIST_CHAR in zip_keys and
+                zip_keys.index(self.LIST_CHAR)
+            )
+            for i, key in enumerate(zip_keys):
+                k = key.lower() if key != self.ASTERISK_CHAR else '*'
+                env_name = self.delimiter.join(zip_keys[:i + 1])
+                if env_name in env:
+                    input_ = env[env_name]
+                elif ((asterisk_index and i == asterisk_index) or
+                        (list_index and i == list_index - 1)):
+                    input_ = []
+                else:
+                    input_ = {}
+                if ((asterisk_index and i > asterisk_index) or
+                        (list_index and i > list_index)):
+                    int_key = int(key)
+                    diff = len(z) - (int_key + 1)
+                    if diff < 0:
+                        z += [None] * abs(diff)
+                    z[int_key] = input_
+                else:
+                    if list_index and i == list_index:
+                        continue
+                    z.setdefault(k, input_)
+                    z = z[k]
+        return rs
+
     def _value_from_env(self, obj):
-        env_val = os.environ.get(
-            self.env_name or self._make_env_name(self.key)
-        )
-        if env_val is None:
-            return env_val
-        if self.parse_env:
-            try:
-                env_val = self.parse_env(env_val)
-            except Exception as e:
-                raise ConfigValueError(
-                    'having a trouble for parsing an environment var.'
-                ) from e
-        return env_val
+        env_name = self._make_env_name(self.key)
+        group_key = env_name + self.delimiter
+        environ = {
+            k: v
+            for k, v in os.environ.items()
+            if k.startswith(group_key) or k == env_name
+        }
+        if environ:
+            e = self._transform_env_to_dict(environ)
+            r = e
+            for k in self.key.split('.'):
+                r = r[k]
+            if self.parse_env:
+                try:
+                    r = self.parse_env(r)
+                except Exception as e:
+                    raise ConfigValueError(
+                        'having a trouble for parsing an environment var.'
+                    ) from e
+            return r
+        else:
+            return None
 
     def get_raw_value(self, obj) -> typing.Tuple[bool, object]:
+        def dict_merge(dct, merge_dct):
+            dct = dct or {}
+            for k, v in merge_dct.items():
+                if k in dct and isinstance(dct[k], dict):
+                    dict_merge(dct[k], merge_dct[k])
+                else:
+                    dct[k] = merge_dct[k]
+            return dct
+
         raw_value = None
         found, value = self._value_from_dict(obj)
         if found:
             raw_value = False, value
-        if raw_value is None and self.lookup_env:
+        if self.lookup_env:
             env_val = self._value_from_env(obj)
             if env_val is not None:
-                raw_value = False, env_val
+                if raw_value and isinstance(value, dict):
+                    raw_value = False, dict_merge(env_val, value)
+                elif raw_value is None:
+                    raw_value = False, env_val
         if raw_value is None and self.default_set:
             default = self.default_func(obj)
             if self.default_warning:
@@ -280,9 +396,6 @@ class config_property:
         return '{0.__module__}.{0.__qualname__}({1!r})'.format(
             type(self), self.key
         )
-
-
-ParseFunctionType = typing.Callable[[typing.Mapping, ], typing.Mapping]
 
 
 class config_object_property(config_property):
@@ -476,94 +589,13 @@ class config_object_property(config_property):
     def __init__(self, key: str, cls, docstring: str = None,
                  recurse: bool = False, *, cached: bool = False,
                  lookup_env: bool = True,
-                 parse: typing.Optional[ParseFunctionType] = None,
+                 parse_env: typing.Optional[ParseFunctionType] = None,
                  **kwargs) -> None:
         super().__init__(key=key, cls=cls, docstring=docstring,
-                         lookup_env=lookup_env, **kwargs)
-        self.parse = parse
+                         lookup_env=lookup_env, parse_env=parse_env,
+                         **kwargs)
         self.recurse = recurse
         self.cached = cached
-
-    def _transform_env_to_dict(
-        self, env: typing.Mapping[str, str]
-    ) -> typing.Mapping:
-        """Transform environment variable into a configuration dict. It uses
-        ``delimiter`` to decide the form of result.
-
-        In the below example, shows us that how environment variable transform
-        into dict.
-
-        .. code-block::bash
-
-           CACHE__CLASS='cache:SimpleCache'
-           CACHE__*__0='arg1'
-           CACHE__*__1='arg2'
-           CACHE__CONNECTOR__CLASS='cache.connector:SimpleConnector'
-           CACHE__CONNECTOR__HOST='localhost'
-
-        .. code-block::python
-
-           {
-               'cache': {
-                   'class': 'cache:SimpleCache',
-                   '*': ('arg1', 'arg2'),
-                   'connector': {
-                       'class': 'cache.connector:SimpleConnector',
-                       'host': 'localhost',
-                   },
-               },
-           }
-
-        """
-        rs = {}
-        split_env_names = [
-            x.split(self.delimiter) for x in env.keys()
-        ]
-        for zip_keys, in itertools.zip_longest(split_env_names):
-            z = rs
-            asterisk_index = '*' in zip_keys and zip_keys.index('*')
-            for i, key in enumerate(zip_keys):
-                k = key.lower()
-                env_name = self.delimiter.join(zip_keys[:i + 1])
-                if env_name in env:
-                    input_ = env[env_name]
-                elif asterisk_index and i == asterisk_index:
-                    input_ = []
-                else:
-                    input_ = {}
-                if asterisk_index and i > asterisk_index:
-                    int_key = int(key)
-                    diff = len(z) - (int_key + 1)
-                    if diff < 0:
-                        z += [None] * abs(diff)
-                    z[int_key] = input_
-                else:
-                    z.setdefault(k, input_)
-                    z = z[k]
-        return rs
-
-    def _value_from_env(self, obj):
-        group_key = self._make_env_name(self.key) + self.delimiter
-        environ = {
-            k: v
-            for k, v in os.environ.items()
-            if k.startswith(group_key)
-        }
-        if environ:
-            e = self._transform_env_to_dict(environ)
-            r = e
-            for k in self.key.split('.'):
-                r = r[k]
-            if self.parse:
-                try:
-                    r = self.parse(r)
-                except Exception as e:
-                    raise ConfigValueError(
-                        'having a trouble for parsing an environment var.'
-                    ) from e
-            return r
-        else:
-            return None
 
     def __get__(self, obj, cls: typing.Optional[type] = None):
         if obj is None:

@@ -1,3 +1,4 @@
+import contextlib
 import enum
 import os
 import pathlib
@@ -10,6 +11,14 @@ from settei.base import (ConfigKeyError, ConfigTypeError,
                          Configuration, ConfigValueError, ConfigWarning,
                          config_object_property, config_property,
                          get_union_types)
+
+
+@contextlib.contextmanager
+def os_environ(d: typing.Mapping):
+    os.environ.update(d)
+    yield
+    for k in d:
+        del os.environ[k]
 
 
 class Enum1(enum.Enum):
@@ -367,98 +376,131 @@ def parse_foo(d: typing.Mapping[str, str]):
 
 class TestEnvAppConfig(dict):
 
+    env_list = config_property('foo.list', list, lookup_env=True)
+    env_dict = config_property('foo.dict', dict, lookup_env=True)
     env_lookup = config_property('foo.bar', str, lookup_env=True)
-    env_with_name = config_property('foo.baz', str, lookup_env=True,
-                                    env_name='LOREM_IPSUM')
     env_false = config_property('foo.qux', str, lookup_env=False)
     env_error = config_property('foo.quux', str, lookup_env=True)
     given_first = config_property('foo.quuz', str, lookup_env=True)
     parse = config_property('foo.parse', bool,
-                            lookup_env=True, parse_env=lambda x: x == 'True')
+                            lookup_env=True,
+                            parse_env=lambda x: x == 'True')
     empty_text = config_property('foo.empty', str, lookup_env=True)
     env_object = config_object_property('foo.obj', SampleInterface)
     recursiveobj = config_object_property('foo.recurse', SampleInterface,
                                           recurse=True)
-
     parse_object = config_object_property(
         'foo.parse',
         SampleInterface,
-        parse=parse_foo
+        parse_env=parse_foo,
+        lookup_env=True
+    )
+    overlay_with_env = config_property(
+        'foo.overlay_env', dict, lookup_env=True
     )
 
 
 def test_config_property_lookup_env():
-    os.environ['FOO__BAR'] = 'hi'
-    os.environ['LOREM_IPSUM'] = 'gg'
-    os.environ['FOO__QUX'] = 'qux'
-    os.environ['FOO__QUUZ'] = 'quuz'
-    os.environ['FOO__EMPTY'] = ''
-    c = TestEnvAppConfig(foo={'quuz': 'gl'})
-    assert c.env_lookup == 'hi', \
-        'Get env var when given configuration is missing.'
-    assert c.env_with_name == 'gg', \
-        'Get env var which one has diffrent name.'
-    assert c.given_first == 'gl', \
-        'Get given configuration even if env var is exist.'
-    # no look up env, no configration = Error
-    with raises(ConfigKeyError):
-        c.env_false
-    # no env, no configration = Error
-    with raises(ConfigKeyError):
-        c.env_error
-    # should allow empty text
-    assert c.empty_text == ''
+    with os_environ({
+        'FOO__DICT__FOO': 'foo',
+        'FOO__DICT__BAR': 'bar',
+        'FOO__LIST__SETTEIENVLIST__0': 'foo',
+        'FOO__LIST__SETTEIENVLIST__1': 'bar',
+        'FOO__BAR': 'hi',
+        'FOO__QUX': 'qux',
+        'FOO__QUUZ': 'quuz',
+        'FOO__EMPTY': '',
+    }):
+        c = TestEnvAppConfig(foo={'quuz': 'gl'})
+        assert c.env_list == ['foo', 'bar']
+        assert c.env_dict == {'foo': 'foo', 'bar': 'bar'}
+        assert c.env_lookup == 'hi', \
+            'Get env var when given configuration is missing.'
+        assert c.given_first == 'gl', \
+            'Get given configuration even if env var is exist.'
+        # no look up env, no configration = Error
+        with raises(ConfigKeyError):
+            c.env_false
+        # no env, no configration = Error
+        with raises(ConfigKeyError):
+            c.env_error
+        # should allow empty text
+        assert c.empty_text == ''
 
 
 def test_config_property_convert_func():
-    os.environ['FOO__PARSE'] = 'True'
-    c = TestEnvAppConfig(foo={})
-    assert c.parse
-    os.environ['FOO__PARSE'] = 'False'
-    assert not c.parse
+    with os_environ({
+        'FOO__PARSE': 'True',
+    }):
+        c = TestEnvAppConfig(foo={})
+        assert c.parse
+    with os_environ({
+        'FOO__PARSE': 'False',
+    }):
+        c = TestEnvAppConfig(foo={})
+        assert not c.parse
 
 
 def test_config_object_property_env():
-    os.environ['FOO__OBJ__CLASS'] = __name__ + ':Impl'
-    os.environ['FOO__OBJ__FOO'] = 'foo'
-    os.environ['FOO__OBJ__BAR'] = 'bar'
-    c = TestEnvAppConfig(foo={})
-    assert c.env_object.kwargs == {
-        'foo': 'foo',
-        'bar': 'bar',
-    }
+    with os_environ({
+        'FOO__OBJ__CLASS': __name__ + ':Impl',
+        'FOO__OBJ__FOO': 'foo',
+        'FOO__OBJ__BAR': 'bar',
+    }):
+        c = TestEnvAppConfig(foo={})
+        assert c.env_object.kwargs == {
+            'foo': 'foo',
+            'bar': 'bar',
+        }
 
 
 def test_config_object_property_env_recurse():
-    os.environ['FOO__RECURSE__CLASS'] = __name__ + ':Impl'
-    os.environ['FOO__RECURSE__*__0'] = 'lorem'
-    os.environ['FOO__RECURSE__F__CLASS'] = __name__ + ':Impl'
-    os.environ['FOO__RECURSE__F__NESTED'] = 'true'
-    os.environ['FOO__RECURSE__F__RECURSIVE__CLASS'] = __name__ + ':Impl'
-    os.environ['FOO__RECURSE__F__RECURSIVE__NESTED'] = 'true'
-    os.environ['FOO__RECURSE__F__RECURSIVE__*__0'] = 'hi'
-    os.environ['FOO__RECURSE__F__RECURSIVE__*__1'] = 'mi'
-    os.environ['FOO__RECURSE__F__RECURSIVE__*__2'] = 'me'
-    c = TestEnvAppConfig(foo={})
-    v = c.recursiveobj
-    assert isinstance(v, Impl)
-    assert frozenset(v.kwargs) == frozenset({'f'})
-    assert v.args == ('lorem', )
-    f = v.kwargs['f']
-    assert isinstance(f, Impl)
-    assert f.args == ()
-    assert frozenset(f.kwargs) == frozenset({'nested', 'recursive'})
-    assert f.kwargs['nested'] == 'true'
-    r = f.kwargs['recursive']
-    assert isinstance(r, Impl)
-    assert r.args == ('hi', 'mi', 'me')
-    assert r.kwargs == {'nested': 'true'}
+    with os_environ({
+        'FOO__RECURSE__CLASS': __name__ + ':Impl',
+        'FOO__RECURSE__ASTERISK__0': 'lorem',
+        'FOO__RECURSE__F__CLASS': __name__ + ':Impl',
+        'FOO__RECURSE__F__NESTED': 'true',
+        'FOO__RECURSE__F__RECURSIVE__CLASS': __name__ + ':Impl',
+        'FOO__RECURSE__F__RECURSIVE__NESTED': 'true',
+        'FOO__RECURSE__F__RECURSIVE__ASTERISK__0': 'hi',
+        'FOO__RECURSE__F__RECURSIVE__ASTERISK__1': 'mi',
+        'FOO__RECURSE__F__RECURSIVE__ASTERISK__2': 'me',
+    }):
+        c = TestEnvAppConfig(foo={})
+        v = c.recursiveobj
+        assert isinstance(v, Impl)
+        assert frozenset(v.kwargs) == frozenset({'f'})
+        assert v.args == ('lorem', )
+        f = v.kwargs['f']
+        assert isinstance(f, Impl)
+        assert f.args == ()
+        assert frozenset(f.kwargs) == frozenset({'nested', 'recursive'})
+        assert f.kwargs['nested'] == 'true'
+        r = f.kwargs['recursive']
+        assert isinstance(r, Impl)
+        assert r.args == ('hi', 'mi', 'me')
+        assert r.kwargs == {'nested': 'true'}
 
 
 def test_config_object_property_env_parse():
-    os.environ['FOO__PARSE__CLASS'] = __name__ + ':Impl'
-    os.environ['FOO__PARSE__*__0'] = '1'
-    os.environ['FOO__PARSE__FOO'] = '3.14'
-    c = TestEnvAppConfig(foo={})
-    assert c.parse_object.args == (1, )
-    assert c.parse_object.kwargs == {'foo': 3.14}
+    with os_environ({
+        'FOO__PARSE__CLASS': __name__ + ':Impl',
+        'FOO__PARSE__ASTERISK__0': '1',
+        'FOO__PARSE__FOO': '3.14',
+    }):
+        c = TestEnvAppConfig(foo={})
+        assert c.parse_object.args == (1, )
+        assert c.parse_object.kwargs == {'foo': 3.14}
+
+
+def test_config_property_overlay_env():
+    with os_environ({'FOO__OVERLAY_ENV__FOO': '1'}):
+        c = TestEnvAppConfig(foo={'overlay_env': {'bar': '2'}})
+        assert c.overlay_with_env == {'foo': '1', 'bar': '2'}
+
+    with os_environ({
+        'FOO__OVERLAY_ENV__FOO': '1',
+        'FOO__OVERLAY_ENV__BAR': '2'
+    }):
+        c = TestEnvAppConfig(foo={'overlay_env': {'bar': '3'}})
+        assert c.overlay_with_env == {'foo': '1', 'bar': '3'}
