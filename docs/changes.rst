@@ -4,7 +4,7 @@ Changelog
 Version 0.7.1
 -------------
 
-To be released.
+Released on March 18, 2020.
 
 - Support values recursively inside lists from environment variable.
 
