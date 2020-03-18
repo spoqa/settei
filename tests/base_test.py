@@ -378,6 +378,8 @@ class TestEnvAppConfig(dict):
 
     env_list = config_property('foo.list', list, lookup_env=True)
     env_dict = config_property('foo.dict', dict, lookup_env=True)
+    env_list_recurse = config_property('foo.list_recurse', list,
+                                       lookup_env=True)
     env_lookup = config_property('foo.bar', str, lookup_env=True)
     env_false = config_property('foo.qux', str, lookup_env=False)
     env_error = config_property('foo.quux', str, lookup_env=True)
@@ -406,6 +408,10 @@ def test_config_property_lookup_env():
         'FOO__DICT__BAR': 'bar',
         'FOO__LIST__SETTEIENVLIST__0': 'foo',
         'FOO__LIST__SETTEIENVLIST__1': 'bar',
+        'FOO__LIST_RECURSE__SETTEIENVLIST__0__FOO': 'foo',
+        'FOO__LIST_RECURSE__SETTEIENVLIST__0__BAR': 'bar',
+        'FOO__LIST_RECURSE__SETTEIENVLIST__1__BAZ': 'baz',
+        'FOO__LIST_RECURSE__SETTEIENVLIST__2__SETTEIENVLIST__0': 'foo',
         'FOO__BAR': 'hi',
         'FOO__QUX': 'qux',
         'FOO__QUUZ': 'quuz',
@@ -413,6 +419,11 @@ def test_config_property_lookup_env():
     }):
         c = TestEnvAppConfig(foo={'quuz': 'gl'})
         assert c.env_list == ['foo', 'bar']
+        assert c.env_list_recurse == [
+            {'foo': 'foo', 'bar': 'bar'},
+            {'baz': 'baz'},
+            ['foo'],
+        ]
         assert c.env_dict == {'foo': 'foo', 'bar': 'bar'}
         assert c.env_lookup == 'hi', \
             'Get env var when given configuration is missing.'
@@ -446,11 +457,20 @@ def test_config_object_property_env():
         'FOO__OBJ__CLASS': __name__ + ':Impl',
         'FOO__OBJ__FOO': 'foo',
         'FOO__OBJ__BAR': 'bar',
+        'FOO__OBJ__BAZ__SETTEIENVLIST__0__FOO': 'foo',
+        'FOO__OBJ__BAZ__SETTEIENVLIST__0__BAR': 'bar',
+        'FOO__OBJ__BAZ__SETTEIENVLIST__1__BAZ': 'baz',
+        'FOO__OBJ__BAZ__SETTEIENVLIST__2__SETTEIENVLIST__0': 'foo',
     }):
         c = TestEnvAppConfig(foo={})
         assert c.env_object.kwargs == {
             'foo': 'foo',
             'bar': 'bar',
+            'baz': [
+                {'foo': 'foo', 'bar': 'bar'},
+                {'baz': 'baz'},
+                ['foo'],
+            ],
         }
 
 
@@ -465,6 +485,7 @@ def test_config_object_property_env_recurse():
         'FOO__RECURSE__F__RECURSIVE__ASTERISK__0': 'hi',
         'FOO__RECURSE__F__RECURSIVE__ASTERISK__1': 'mi',
         'FOO__RECURSE__F__RECURSIVE__ASTERISK__2': 'me',
+        'FOO__RECURSE__F__RECURSIVE__ASTERISK__3__SETTEIENVLIST__0': 'you',
     }):
         c = TestEnvAppConfig(foo={})
         v = c.recursiveobj
@@ -478,7 +499,7 @@ def test_config_object_property_env_recurse():
         assert f.kwargs['nested'] == 'true'
         r = f.kwargs['recursive']
         assert isinstance(r, Impl)
-        assert r.args == ('hi', 'mi', 'me')
+        assert r.args == ('hi', 'mi', 'me', ['you'])
         assert r.kwargs == {'nested': 'true'}
 
 
