@@ -8,7 +8,6 @@ import collections
 import collections.abc
 import enum
 import functools
-import itertools
 import os
 import pathlib
 import re
@@ -241,41 +240,38 @@ class config_property:
 
         """
         rs = {}
-        split_env_names = [
-            x.split(self.delimiter) for x in env.keys()
-        ]
-        for zip_keys, in itertools.zip_longest(split_env_names):
+
+        for env_key in env.keys():
+            keys = env_key.split(self.delimiter)
+            asterisk_indexes = [
+                i for i, key in enumerate(keys)
+                if key == self.ASTERISK_CHAR
+            ]
+            list_indexes = [
+                i for i, key in enumerate(keys)
+                if key == self.LIST_CHAR
+            ]
             z = rs
-            asterisk_index = (
-                self.ASTERISK_CHAR in zip_keys and
-                zip_keys.index(self.ASTERISK_CHAR)
-            )
-            list_index = (
-                self.LIST_CHAR in zip_keys and
-                zip_keys.index(self.LIST_CHAR)
-            )
-            for i, key in enumerate(zip_keys):
-                k = key.lower() if key != self.ASTERISK_CHAR else '*'
-                env_name = self.delimiter.join(zip_keys[:i + 1])
-                if env_name in env:
-                    input_ = env[env_name]
-                elif ((asterisk_index and i == asterisk_index) or
-                        (list_index and i == list_index - 1)):
+            for i, key in enumerate(keys):
+                if i in list_indexes:
+                    continue
+                if i == len(keys) - 1:
+                    input_ = env[env_key]
+                elif (i in asterisk_indexes) or (i + 1 in list_indexes):
                     input_ = []
                 else:
                     input_ = {}
-                if ((asterisk_index and i > asterisk_index) or
-                        (list_index and i > list_index)):
-                    int_key = int(key)
-                    diff = len(z) - (int_key + 1)
+                if (i - 1 in asterisk_indexes) or (i - 1 in list_indexes):
+                    k = int(key)
+                    diff = len(z) - (k + 1)
                     if diff < 0:
                         z += [None] * abs(diff)
-                    z[int_key] = input_
+                    if z[k] is None:
+                        z[k] = input_
                 else:
-                    if list_index and i == list_index:
-                        continue
+                    k = key.lower() if i not in asterisk_indexes else '*'
                     z.setdefault(k, input_)
-                    z = z[k]
+                z = z[k]
         return rs
 
     def _value_from_env(self, obj):
