@@ -46,7 +46,7 @@ class WorkerConfiguration(LoggingConfiguration):
         """The url of the broker used by Celery.  See also Celery's and
         Kombu's docs about broker urls:
 
-        http://docs.celeryproject.org/en/latest/configuration.html#broker-url
+        https://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-broker_url
         http://kombu.readthedocs.org/en/latest/userguide/connections.html#connection-urls
 
         """
@@ -57,7 +57,7 @@ class WorkerConfiguration(LoggingConfiguration):
         """The backend used by Celery to store task results.  See also Celery's
         docs about result backends:
 
-        http://docs.celeryproject.org/en/latest/configuration.html#celery-result-backend
+        https://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-result_backend
 
         """
     )
