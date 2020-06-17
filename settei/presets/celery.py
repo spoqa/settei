@@ -59,7 +59,7 @@ class WorkerConfiguration(LoggingConfiguration):
 
         https://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-result_backend
 
-        """
+        """, default=None
     )
 
     @cached_property

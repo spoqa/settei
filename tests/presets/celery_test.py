@@ -22,6 +22,19 @@ def test_worker_config():
             'redis://')
 
 
+def test_worker_config_without_result_backend():
+    conf = WorkerConfiguration({
+        'worker': {
+            'broker_url': 'redis://',
+        },
+    })
+    assert (conf.worker_config['BROKER_URL'] ==
+            conf.worker_broker_url ==
+            'redis://')
+    assert (conf.worker_config['CELERY_RESULT_BACKEND'] ==
+            conf.worker_result_backend is None)
+
+
 def test_worker_on_loaded():
     conf = WorkerConfiguration({
         'worker': {
