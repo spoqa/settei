@@ -116,7 +116,7 @@ class WebConfiguration(LoggingConfiguration):
         """
         self.configure_logging()
 
-        on_loaded = self.config.get('web', {}).get('on_loaded', [])
+        on_loaded = self.get('web').get('on_loaded', [])
 
         if isinstance(on_loaded, (list, tuple)):
             for hook_path in on_loaded:
