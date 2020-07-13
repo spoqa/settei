@@ -4,11 +4,10 @@ import uuid
 from pytest import mark, raises
 from typeguard import typechecked
 
+from .utils import os_environ
 from settei.parse_env import (
     EnvReader, parse_bool, parse_float, parse_int, parse_uuid,
 )
-
-from .utils import os_environ
 
 
 @mark.parametrize('v, result', [

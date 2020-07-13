@@ -111,7 +111,7 @@ class WorkerConfiguration(LoggingConfiguration):
         .. versionadded:: 0.2.2
 
         """
-        raw_config = self.config.get('worker', {})
+        raw_config = self.get('worker', {})
         try:
             table = raw_config['celerybeat_schedule']
         except KeyError:
@@ -170,7 +170,7 @@ class WorkerConfiguration(LoggingConfiguration):
         <celery.Celery.conf>`.
 
         """
-        raw_config = self.config.get('worker', {})
+        raw_config = self.get('worker', {})
         if isinstance(raw_config, collections.abc.Mapping):
             celery_config = {k.upper(): v for k, v in raw_config.items()}
         else:

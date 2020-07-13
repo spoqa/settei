@@ -54,7 +54,7 @@ class WebConfiguration(LoggingConfiguration):
         web that will go to :attr:`flask.Flask.config <Flask.config>`.
 
         """
-        web_config = self.config.get('web', {})
+        web_config = self.get('web', {})
         if not isinstance(web_config, collections.abc.Mapping):
             web_config = {}
         return ImmutableDict((k.upper(), v) for k, v in web_config.items())
