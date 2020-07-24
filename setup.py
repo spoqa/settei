@@ -65,7 +65,7 @@ setup(
     license='Apache 2.0',
     author='Spoqa Creators',
     author_email='dev' '@' 'spoqa.com',
-    packages=find_packages(),
+    packages=find_packages(exclude=('tests', 'tests.*')),
     python_requires='>=3.4.0',
     install_requires=install_requires,
     extras_require=dict(
