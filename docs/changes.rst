@@ -6,6 +6,8 @@ Version 0.7.2
 
 To be released.
 
+- Exclude `tests` module from package.
+
 Version 0.7.1
 -------------
 
