@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.7.3
+-------------
+
+To be released.
+
 Version 0.7.2
 -------------
 
