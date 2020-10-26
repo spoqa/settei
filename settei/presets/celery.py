@@ -46,7 +46,7 @@ class WorkerConfiguration(LoggingConfiguration):
         """The url of the broker used by Celery.  See also Celery's and
         Kombu's docs about broker urls:
 
-        http://docs.celeryproject.org/en/latest/configuration.html#broker-url
+        https://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-broker_url
         http://kombu.readthedocs.org/en/latest/userguide/connections.html#connection-urls
 
         """
@@ -57,9 +57,9 @@ class WorkerConfiguration(LoggingConfiguration):
         """The backend used by Celery to store task results.  See also Celery's
         docs about result backends:
 
-        http://docs.celeryproject.org/en/latest/configuration.html#celery-result-backend
+        https://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-result_backend
 
-        """
+        """, default=None
     )
 
     @cached_property
@@ -111,7 +111,7 @@ class WorkerConfiguration(LoggingConfiguration):
         .. versionadded:: 0.2.2
 
         """
-        raw_config = self.config.get('worker', {})
+        raw_config = self.get('worker', {})
         try:
             table = raw_config['celerybeat_schedule']
         except KeyError:
@@ -170,7 +170,7 @@ class WorkerConfiguration(LoggingConfiguration):
         <celery.Celery.conf>`.
 
         """
-        raw_config = self.config.get('worker', {})
+        raw_config = self.get('worker', {})
         if isinstance(raw_config, collections.abc.Mapping):
             celery_config = {k.upper(): v for k, v in raw_config.items()}
         else:
@@ -237,7 +237,7 @@ class WorkerConfiguration(LoggingConfiguration):
         """
         self.configure_logging()
 
-        on_loaded = self.config.get('worker', {}).get('on_loaded', [])
+        on_loaded = self.get('worker').get('on_loaded', [])
 
         if isinstance(on_loaded, (list, tuple)):
             for hook_path in on_loaded:

@@ -18,6 +18,8 @@ import warnings
 from pytoml import load
 from typeguard import typechecked
 
+from settei.parse_env import EnvReader
+
 __all__ = ('ConfigError', 'ConfigKeyError', 'ConfigTypeError',
            'Configuration', 'ConfigValueError', 'ConfigWarning',
            'config_object_property', 'config_property', 'get_union_types')
@@ -712,7 +714,7 @@ class ConfigWarning(RuntimeWarning):
     """
 
 
-class Configuration(collections.abc.Mapping):
+class Configuration(EnvReader):
     """Application instance with its settings e.g. database.  It implements
     read-only :class:`~collections.abc.Mapping` protocol as well, so you
     can treat it as a dictionary of string keys.
@@ -724,6 +726,15 @@ class Configuration(collections.abc.Mapping):
        a subtype of :exc:`KeyError`, instead.
 
     """
+
+    @property
+    def config(self) -> 'Configuration':
+        warnings.warn(
+            'settei.base.Configuration.config is deprecated.'
+            'Do not use config directly. It will be removed after 0.8.0.',
+            DeprecationWarning
+        )
+        return self
 
     @classmethod
     def from_file(cls, file) -> 'Configuration':
@@ -753,26 +764,3 @@ class Configuration(collections.abc.Mapping):
             raise FileNotFoundError('file not found: {!s}'.format(path))
         with path.open() as f:
             return cls.from_file(f)
-
-    @typechecked
-    def __init__(self, config: typing.Mapping[str, object] = {}, **kwargs):
-        self.config = dict(config, **kwargs)
-
-    def __len__(self) -> int:
-        return len(self.config)
-
-    def __iter__(self) -> typing.Iterator[str]:
-        return iter(self.config)
-
-    def __getitem__(self, key: str):
-        if isinstance(key, str):
-            try:
-                return self.config[key]
-            except KeyError:
-                pass
-        raise ConfigKeyError(key)
-
-    def __repr__(self) -> str:
-        return '{0.__module__}.{0.__qualname__}({1!r})'.format(
-            type(self), self.config
-        )

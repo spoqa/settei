@@ -1,24 +1,15 @@
-import contextlib
 import enum
-import os
 import pathlib
 import typing  # noqa
 import warnings
 
 from pytest import mark, raises
 
+from .utils import os_environ
 from settei.base import (ConfigKeyError, ConfigTypeError,
                          Configuration, ConfigValueError, ConfigWarning,
                          config_object_property, config_property,
                          get_union_types)
-
-
-@contextlib.contextmanager
-def os_environ(d: typing.Mapping):
-    os.environ.update(d)
-    yield
-    for k in d:
-        del os.environ[k]
 
 
 class Enum1(enum.Enum):

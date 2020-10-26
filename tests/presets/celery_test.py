@@ -3,6 +3,7 @@ import datetime
 from celery import Celery
 from celery.schedules import crontab
 
+from ..utils import os_environ
 from .logging_test import test_configure_logging as configure_test
 from settei.presets.celery import WorkerConfiguration
 
@@ -22,9 +23,23 @@ def test_worker_config():
             'redis://')
 
 
+def test_worker_config_without_result_backend():
+    conf = WorkerConfiguration({
+        'worker': {
+            'broker_url': 'redis://',
+        },
+    })
+    assert (conf.worker_config['BROKER_URL'] ==
+            conf.worker_broker_url ==
+            'redis://')
+    assert (conf.worker_config['CELERY_RESULT_BACKEND'] ==
+            conf.worker_result_backend is None)
+
+
 def test_worker_on_loaded():
     conf = WorkerConfiguration({
         'worker': {
+            'broker_url': 'redis://',
             'on_loaded': "assert app.main == '{}'\n"
                          "app.main = 'ok'".format(__name__),
         },
@@ -32,6 +47,19 @@ def test_worker_on_loaded():
     app = Celery(__name__)
     conf.on_worker_loaded(app)
     assert app.main == 'ok'
+
+
+def test_worker_on_loaded_from_env():
+    with os_environ({
+        'WORKER__BROKER_URL': 'redis://',
+        'WORKER__ON_LOADED':
+            "assert app.main == '{}'\n"
+            "app.main = 'ok'".format(__name__),
+    }):
+        conf = WorkerConfiguration()
+        app = Celery(__name__)
+        conf.on_worker_loaded(app)
+        assert app.main == 'ok'
 
 
 def sample_hook(conf: WorkerConfiguration, app: Celery):
@@ -42,12 +70,25 @@ def sample_hook(conf: WorkerConfiguration, app: Celery):
 def test_worker_on_loaded_hooks_list():
     conf = WorkerConfiguration({
         'worker': {
+            'broker_url': 'redis://',
             'on_loaded': [__name__ + ':' + sample_hook.__name__],
         },
     })
     app = Celery(__name__)
     conf.on_worker_loaded(app)
     assert app.main == 'ok'
+
+
+def test_worker_on_loaded_hooks_list_from_env():
+    with os_environ({
+        'WORKER__BROKER_URL': 'redis://',
+        'WORKER__ON_LOADED__SETTEIENVLIST__0':
+            __name__ + ':' + sample_hook.__name__,
+    }):
+        conf = WorkerConfiguration()
+        app = Celery(__name__)
+        conf.on_worker_loaded(app)
+        assert app.main == 'ok'
 
 
 def test_configure_logging():

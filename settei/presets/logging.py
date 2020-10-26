@@ -39,7 +39,7 @@ class LoggingConfiguration(Configuration):
     def configure_logging(self) -> None:
         """Configure :mod:`logging`."""
         try:
-            conf = self.config['logging']
+            conf = self['logging']
         except KeyError:
             pass
         else:
