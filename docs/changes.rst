@@ -4,7 +4,7 @@ Changelog
 Version 0.7.2
 -------------
 
-To be released.
+Released on October 26, 2020.
 
 - Exclude `tests` module from package.
 - To be able to get an environment value from `Configuration` itself
