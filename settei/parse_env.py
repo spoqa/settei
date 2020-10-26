@@ -141,10 +141,16 @@ class EnvReader(collections.abc.Mapping):
 
             result = self._value_from_env(keys[key_index:], env_key, True)
             if keys[key_index + 1] == self.LIST_CHAR:
-                list_results.append(result)
+                list_results.append((keys[key_index + 2], result))
             elif keys[key_index + 1] == self.ASTERISK_CHAR:
-                asterisk_results.append(result)
-        return list_results or tuple(asterisk_results)
+                asterisk_results.append((keys[key_index + 2], result))
+        return self._convert_sorted_results(list_results) or \
+            tuple(self._convert_sorted_results(asterisk_results))
+
+    def _convert_sorted_results(
+        self, results: typing.List[typing.Tuple[int, typing.Any]],
+    ) -> typing.List[typing.Any]:
+        return [r[1] for r in sorted(results, key=lambda x: x[0])]
 
     def _value_from_env(
         self, keys: typing.List[str], env_key: str, unpacked: bool = False,

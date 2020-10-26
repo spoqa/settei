@@ -80,10 +80,10 @@ def test_env_reader_setteienvlist():
     with os_environ(
         {
             'A__SETTEIENVLIST__0': 'test1',
-            'A__SETTEIENVLIST__1': 'test2',
             'A__SETTEIENVLIST__2': 'test3',
-            'A__SETTEIENVLIST__3': 'test4',
+            'A__SETTEIENVLIST__1': 'test2',
             'A__SETTEIENVLIST__4': 'test5',
+            'A__SETTEIENVLIST__3': 'test4',
         }
     ):
         assert d['a'] == ['test1', 'test2', 'test3', 'test4', 'test5']
@@ -101,6 +101,13 @@ def test_env_reader_setteienvlist():
         }
     ):
         assert d['a']['b']['c'] == ['test1', 'test2']
+    with os_environ(
+        {
+            'A__SETTEIENVLIST__0__SETTEIENVLIST__0': 'test1',
+            'A__SETTEIENVLIST__1': 'test2',
+        }
+    ):
+        assert d['a'] == [['test1'], 'test2']
     # get os env only (priority test)
     with os_environ(
         {
@@ -119,6 +126,13 @@ def test_env_reader_asterisk():
         {
             'A__ASTERISK__0': 'arg1',
             'A__ASTERISK__1': 'arg2',
+        }
+    ):
+        assert d['a'] == ('arg1', 'arg2')
+    with os_environ(
+        {
+            'A__ASTERISK__1': 'arg2',
+            'A__ASTERISK__0': 'arg1',
         }
     ):
         assert d['a'] == ('arg1', 'arg2')
