@@ -7,6 +7,8 @@ Version 0.7.2
 To be released.
 
 - Exclude `tests` module from package.
+- To be able to get an environment value from `Configuration` itself
+  as well as getting from `config_property`.
 
 Version 0.7.1
 -------------
