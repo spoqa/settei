@@ -4,7 +4,7 @@ Changelog
 Version 0.7.3
 -------------
 
-To be released.
+Released on October 29, 2020.
 
 - Fix bug that cannot set `config_object_property` from environment variables.
 
