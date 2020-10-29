@@ -205,6 +205,8 @@ class config_property:
                 value = value[key]
             except KeyError:
                 return False, None
+            if isinstance(value, EnvReader):
+                return False, None
         return True, value
 
     def _make_env_name(self, k: str) -> str:

@@ -6,6 +6,8 @@ Version 0.7.3
 
 To be released.
 
+- Fix bug that cannot set `config_object_property` from environment variables.
+
 Version 0.7.2
 -------------
 

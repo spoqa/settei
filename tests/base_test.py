@@ -365,7 +365,7 @@ def parse_foo(d: typing.Mapping[str, str]):
     return r
 
 
-class TestEnvAppConfig(dict):
+class TestEnvAppConfig(Configuration):
 
     env_list = config_property('foo.list', list, lookup_env=True)
     env_dict = config_property('foo.dict', dict, lookup_env=True)
@@ -434,12 +434,12 @@ def test_config_property_convert_func():
     with os_environ({
         'FOO__PARSE': 'True',
     }):
-        c = TestEnvAppConfig(foo={})
+        c = TestEnvAppConfig()
         assert c.parse
     with os_environ({
         'FOO__PARSE': 'False',
     }):
-        c = TestEnvAppConfig(foo={})
+        c = TestEnvAppConfig()
         assert not c.parse
 
 
@@ -453,7 +453,7 @@ def test_config_object_property_env():
         'FOO__OBJ__BAZ__SETTEIENVLIST__1__BAZ': 'baz',
         'FOO__OBJ__BAZ__SETTEIENVLIST__2__SETTEIENVLIST__0': 'foo',
     }):
-        c = TestEnvAppConfig(foo={})
+        c = TestEnvAppConfig()
         assert c.env_object.kwargs == {
             'foo': 'foo',
             'bar': 'bar',
@@ -478,7 +478,7 @@ def test_config_object_property_env_recurse():
         'FOO__RECURSE__F__RECURSIVE__ASTERISK__2': 'me',
         'FOO__RECURSE__F__RECURSIVE__ASTERISK__3__SETTEIENVLIST__0': 'you',
     }):
-        c = TestEnvAppConfig(foo={})
+        c = TestEnvAppConfig()
         v = c.recursiveobj
         assert isinstance(v, Impl)
         assert frozenset(v.kwargs) == frozenset({'f'})
@@ -500,7 +500,7 @@ def test_config_object_property_env_parse():
         'FOO__PARSE__ASTERISK__0': '1',
         'FOO__PARSE__FOO': '3.14',
     }):
-        c = TestEnvAppConfig(foo={})
+        c = TestEnvAppConfig()
         assert c.parse_object.args == (1, )
         assert c.parse_object.kwargs == {'foo': 3.14}
 
